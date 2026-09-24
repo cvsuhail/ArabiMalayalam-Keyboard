@@ -121,7 +121,6 @@ ArabiMalayalam is engineered as a standalone Progressive Web App:
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) with custom font definitions
 - **Storage**: [Dexie.js](https://dexie.org/) (Client-side IndexedDB wrapper)
 - **Transliterator Engines**:
-  - [`arabic-malayalam-transliterator`](https://github.com/naswihmohd/arabic-malayalam-transliterator)
   - [`@piraisoodan/tanglish`](https://github.com/piraisoodan/tanglish) (Manglish phonetics)
   - Custom enhanced multi-script rule parser with Dravidian short vowel support
 - **Icons**: [Lucide React](https://lucide.dev/)

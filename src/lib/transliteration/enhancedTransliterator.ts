@@ -1,33 +1,18 @@
 import { createEngine, type LanguageConfig } from "@piraisoodan/tanglish";
-import * as transliteratorModule from "arabic-malayalam-transliterator";
+import {
+  transliterateMalayalamToArabic,
+  withStandardOMarks,
+} from "./malayalamToArabic";
 
 /**
  * Enhanced Arabi-Malayalam & Malayalam Transliterator
  * Incorporates:
  * 1. '@piraisoodan/tanglish' (Manglish / Malayalam engine)
- * 2. 'arabic-malayalam-transliterator' (by naswihmohd)
- * 3. Malayalamozhi Arabi-Malayalam orthography standards
- * 4. Comprehensive Manglish-to-Malayalam mapping
+ * 2. A Unicode-aware Malayalam / Arabi-Malayalam engine
+ * 3. Comprehensive Manglish-to-Malayalam mapping
  */
 
-// Safe cross-environment unwrap for CJS/ESM interop
-const rawTransliterator: any = transliteratorModule;
-export const transliterateToArabic = (text: string): string => {
-  try {
-    if (typeof rawTransliterator === "function") {
-      return rawTransliterator(text);
-    }
-    if (typeof rawTransliterator?.default === "function") {
-      return rawTransliterator.default(text);
-    }
-    if (typeof rawTransliterator?.default?.default === "function") {
-      return rawTransliterator.default.default(text);
-    }
-  } catch (e) {
-    console.error("Transliteration call error:", e);
-  }
-  return text;
-};
+export const transliterateToArabic = transliterateMalayalamToArabic;
 
 // Common Manglish to Malayalam mapping dictionary
 export const MANGLISH_TO_MALAYALAM_MAP: Record<string, string[]> = {
@@ -571,87 +556,8 @@ export function stripArabicDiacritics(text: string): string {
  * full chillaksharam, and authentic Arabi-Malayalam consonants.
  */
 export function convertMalayalamToArabiMalayalam(ml: string): string[] {
-  const clusters: Record<string, string> = {
-    "ച്ച": "چَّ", "ജ്ജ": "جَّ", "ഡ്ഡ": "ڈَّ", "ക്ക": "کَّ", "ത്ത": "تَّ",
-    "ദ്ദ": "دَّ", "പ്പ": "پَّ", "ബ്ബ": "بَّ", "മ്മ": "مَّ", "ന്ന": "نَّ",
-    "ല്ല": "لَّ", "ട്ട": "ڊَّ", "ര്ര": "ڔَّ", "സ്സ": "سَّ", "ഹ്ഹ": "حَّ",
-    "ള്ള": "ڶَّ", "ചേ": "چ٘", "ങ്ങ": "ۼَّ", "ദ്ധ": "دّھ", "സ്വ": "ص",
-    "ക്ഷ": "کْشَ", "ജ്ഞ": "جْڿَ", "ശ്ര": "شْرَ", "സ്ര": "سْرَ", "ഹ്ര": "حْرَ",
-    "സം": "سَمْ", "ങ്ക": "نْكَ", "ന്റ": "نْڔَ", "റ്റ": "ڔَّ", "ഞ്ച": "ڿْچَ",
-    "ണ്ട": "ڹْڈَ", "ന്ത": "نْتَ", "മ്പ": "مْپَ"
-  };
-
-  const indepVowels: Record<string, string> = {
-    "അ": "اَ", "ആ": "اٰ", "ഇ": "اِ", "ഈ": "اِی", "ഉ": "اُ", "ഊ": "اُو",
-    "ഋ": "رْ", "ൠ": "رّْ", "ഌ": "لْ", "ൡ": "لّْ",
-    "എ": "ا٘", "ഏ": "ا٘ی", "ഐ": "اَی",
-    "ഒ": "اٗ", "ഓ": "اٗو", "ഔ": "اَو"
-  };
-
-  const consonants: Record<string, string> = {
-    "ക": "کَ", "ഖ": "خَ", "ഗ": "ڰَ", "ഘ": "ڰَّ", "ങ": "ۼَ",
-    "ച": "چَ", "ഛ": "چَّ", "ജ": "جَ", "ഝ": "جَّ", "ഞ": "ڿَ",
-    "ട": "ڊَ", "ഠ": "ٹَّ", "ഡ": "ڈَ", "ഢ": "ڈَّ", "ണ": "ڹَ",
-    "ത": "تَ", "ഥ": "تَّ", "ദ": "دَ", "ധ": "دَ", "ന": "نَ",
-    "പ": "پَ", "ഫ": "فَ", "ബ": "بَ", "ഭ": "بَّ", "മ": "مَ",
-    "യ": "یَ", "ര": "ڔَ", "ല": "لَ", "വ": "وَ", "ശ": "شَ", "ഷ": "شَّ",
-    "സ": "سَ", "ഹ": "حَ", "ള": "ڶَ", "ഴ": "ژَ", "റ": "ڔَ",
-    "ൻ": "نْ", "ർ": "رْ", "ൽ": "لْ", "ൾ": "ڶْ", "ൺ": "ڹْ", "ൿ": "کْ"
-  };
-
-  const matras: Record<string, string> = {
-    "ാ": "ا", "ി": "ِ", "ീ": "ِي", "ു": "ُ", "ൂ": "ُو",
-    "ൃ": "ْر", "െ": "٘", "േ": "٘ی", "ൈ": "يْ",
-    "ൊ": "ٗ",   // Arabi-Malayalam inverted damma for short o
-    "ോ": "ٗو",  // Arabi-Malayalam inverted damma + waw for long o
-    "ൗ": "َو", "്": "ْ", "ം": "مْ"
-  };
-
-  let primary = "";
-  for (let i = 0; i < ml.length; i++) {
-    const three = ml.slice(i, i + 3);
-    const two = ml.slice(i, i + 2);
-    const one = ml[i]!;
-    const next = ml[i + 1];
-
-    if (clusters[three]) {
-      primary += clusters[three];
-      i += 2;
-      continue;
-    }
-    if (clusters[two]) {
-      primary += clusters[two];
-      i += 1;
-      continue;
-    }
-    if (indepVowels[one]) {
-      primary += indepVowels[one];
-      continue;
-    }
-    if (consonants[one]) {
-      let base = consonants[one]!;
-      if (next && matras[next]) {
-        if (base.endsWith("َ")) base = base.slice(0, -1);
-        primary += base + matras[next];
-        i++;
-        continue;
-      }
-      primary += base;
-      continue;
-    }
-    if (matras[one]) {
-      primary += matras[one];
-      continue;
-    }
-    primary += one;
-  }
-
-  // Variant with standard damma/waw for o
-  const standardOVariant = primary
-    .replace(/اٗو/g, "اُو")
-    .replace(/اٗ/g, "اُ")
-    .replace(/ٗو/g, "ُو")
-    .replace(/ٗ/g, "ُ");
+  const primary = transliterateMalayalamToArabic(ml);
+  const standardOVariant = withStandardOMarks(primary);
 
   const results = [primary];
   if (standardOVariant !== primary) {

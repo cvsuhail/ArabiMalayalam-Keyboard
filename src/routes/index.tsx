@@ -324,6 +324,35 @@ function ArabiMalayalamEditor() {
     }
   };
 
+  // Convert pasted Malayalam immediately, including complete sentences and paragraphs.
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = e.clipboardData.getData("text/plain");
+    if (!pastedText) return;
+
+    e.preventDefault();
+
+    const el = e.currentTarget;
+    const selectionStart = el.selectionStart;
+    const selectionEnd = el.selectionEnd;
+    const convertedText = transliterateToArabic(pastedText);
+    const updated =
+      text.slice(0, selectionStart) + convertedText + text.slice(selectionEnd);
+    const newCaretPosition = selectionStart + convertedText.length;
+
+    setHistoryStack((prev) => [...prev, updated]);
+    setRedoStack([]);
+    setText(updated);
+    setCurrentWord("");
+    setSuggestions([]);
+    setSuggestionPos(null);
+    triggerAutoSave(updated, title);
+
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(newCaretPosition, newCaretPosition);
+    });
+  };
+
   // Undo / Redo
   const handleUndo = () => {
     if (historyStack.length > 1) {
@@ -869,6 +898,7 @@ function ArabiMalayalamEditor() {
                 ref={textareaRef}
                 value={text}
                 onChange={handleTextChange}
+                onPaste={handlePaste}
                 onKeyDown={handleKeyDown}
                 dir={textAlign === "right" ? "rtl" : "ltr"}
                 placeholder=""
