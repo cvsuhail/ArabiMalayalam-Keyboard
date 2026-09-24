@@ -2,7 +2,7 @@ import { createEngine, type LanguageConfig } from "@piraisoodan/tanglish";
 import {
   transliterateMalayalamToArabic,
   withStandardOMarks,
-} from "./malayalamToArabic";
+} from "./malayalamToArabic.ts";
 
 /**
  * Enhanced Arabi-Malayalam & Malayalam Transliterator
@@ -16,46 +16,68 @@ export const transliterateToArabic = transliterateMalayalamToArabic;
 
 // Common Manglish to Malayalam mapping dictionary
 export const MANGLISH_TO_MALAYALAM_MAP: Record<string, string[]> = {
-  hello: ["ഹലോ", "ഹെല്ലോ", "ഞെല്ലൊ", "ഞെല്ലോ", "ഹെലോ"],
-  njan: ["ഞാൻ", "ഞാൻ", "ഞാനും", "ഞാനാണ്", "ഞാനെന്ന്"],
-  njaan: ["ഞാൻ", "ഞാനും", "ഞാനാണ്"],
-  salam: ["സലാം", "അസ്സലാമു അലൈക്കും"],
-  salaam: ["സലാം", "അസ്സലാമു അലൈക്കും"],
-  namaskaram: ["നമസ്കാരം", "നമസ്തേ"],
-  keralam: ["കേരളം", "കേരളത്തിൽ"],
-  vellam: ["വെള്ളം", "വെള്ളത്തിൽ"],
-  veedu: ["വീട്", "വീട്ടിൽ", "വീടുകൾ"],
+  hello: ["ഹലോ", "ഹെല്ലോ"],
+  njan: ["ഞാൻ"],
+  njaan: ["ഞാൻ"],
+  njanum: ["ഞാനും"],
+  njananu: ["ഞാനാണ്"],
+  njanennu: ["ഞാനെന്ന്"],
+  salam: ["സലാം"],
+  salaam: ["സലാം"],
+  namaskaram: ["നമസ്കാരം"],
+  keralam: ["കേരളം"],
+  vellam: ["വെള്ളം"],
+  veedu: ["വീട്"],
   veettil: ["വീട്ടിൽ"],
-  ente: ["എന്റെ", "എന്റേത്"],
-  ningal: ["നിങ്ങൾ", "നിങ്ങൾക്ക്", "നിങ്ങളുടെ"],
+  ente: ["എന്റെ"],
+  entethu: ["എന്റേത്"],
+  ningal: ["നിങ്ങൾ"],
+  ningalude: ["നിങ്ങളുടെ"],
+  njangal: ["ഞങ്ങൾ"],
+  njangalude: ["ഞങ്ങളുടെ"],
+  njangalkk: ["ഞങ്ങൾക്ക്"],
+  njangalkku: ["ഞങ്ങൾക്ക്"],
   ningalkku: ["നിങ്ങൾക്ക്"],
-  enikku: ["എനിക്ക്", "എനിക്കറിയില്ല"],
-  sukhamano: ["സുഖമാണോ", "സുഖമാണ്"],
+  ningalkk: ["നിങ്ങൾക്ക്"],
+  enikku: ["എനിക്ക്"],
+  enikk: ["എനിക്ക്"],
+  ninakku: ["നിനക്ക്"],
+  ninakk: ["നിനക്ക്"],
+  nammal: ["നമ്മൾ"],
+  namukk: ["നമുക്ക്"],
+  namukku: ["നമുക്ക്"],
+  sukhamano: ["സുഖമാണോ"],
   sukhamanu: ["സുഖമാണ്"],
   sukham: ["സുഖം"],
-  poyi: ["പോയി", "പോയിട്ടുണ്ട്"],
-  vannu: ["വന്നു", "വന്നിട്ടുണ്ട്"],
-  kazhichu: ["കഴിച്ചു", "കഴിച്ചോ"],
+  poyi: ["പോയി"],
+  vannu: ["വന്നു"],
+  kazhichu: ["കഴിച്ചു"],
   kazhicho: ["കഴിച്ചോ"],
-  entha: ["എന്താ", "എന്താണ്", "എന്തെങ്കിലും"],
+  entha: ["എന്താ"],
   enthanu: ["എന്താണ്"],
-  evide: ["എവിടെ", "എവിടെയാണ്"],
-  evideya: ["എവിടെയാ", "എവിടെയാണ്"],
-  aaru: ["ആര്", "ആരാണ്"],
-  aar: ["ആര്", "ആരാണ്"],
+  evide: ["എവിടെ"],
+  evideya: ["എവിടെയാ"],
+  evidayanu: ["എവിടെയാണ്"],
+  aaru: ["ആര്"],
+  aar: ["ആര്"],
   aaranu: ["ആരാണ്"],
-  eppol: ["എപ്പോൾ", "എപ്പോഴാണ്"],
+  eppol: ["എപ്പോൾ"],
+  eppo: ["എപ്പോ"],
+  eppozha: ["എപ്പോഴാ"],
+  eppozhanu: ["എപ്പോഴാണ്"],
   eppozhum: ["എപ്പോഴും"],
-  engane: ["എങ്ങനെ", "എങ്ങനെയാണ്"],
-  nanni: ["നന്ദി", "വളരെ നന്ദി"],
-  pusthakam: ["പുസ്തകം", "പുസ്തകങ്ങൾ"],
-  kutty: ["കുട്ടി", "കുട്ടികൾ"],
-  kutti: ["കുട്ടി", "കുട്ടികൾ"],
-  amma: ["അമ്മ", "അമ്മേ"],
-  uppa: ["ഉപ്പ", "ഉപ്പാ"],
-  nalla: ["നല്ല", "നല്ലത്"],
-  onnu: ["ഒന്ന്", "ഒന്നാമത്"],
-  randu: ["രണ്ട്", "രണ്ടാമത്"],
+  engane: ["എങ്ങനെ"],
+  enganeya: ["എങ്ങനെയാ"],
+  enganeyanu: ["എങ്ങനെയാണ്"],
+  nanni: ["നന്ദി"],
+  pusthakam: ["പുസ്തകം"],
+  kutty: ["കുട്ടി"],
+  kutti: ["കുട്ടി"],
+  amma: ["അമ്മ"],
+  uppa: ["ഉപ്പ"],
+  nalla: ["നല്ല"],
+  onnu: ["ഒന്ന്"],
+  randu: ["രണ്ട്"],
   moonnu: ["മൂന്ന്"],
   naalu: ["നാല്"],
   anju: ["അഞ്ച്"],
@@ -66,27 +88,37 @@ export const MANGLISH_TO_MALAYALAM_MAP: Record<string, string[]> = {
   pathu: ["പത്ത്"],
   ezhuthuka: ["എഴുതുക", "എഴുതുന്നു", "എഴുതി"],
   ezhuthu: ["എഴുത്ത്"],
-  vaayikkuka: ["വായിക്കുക", "വായിക്കുന്നു", "വായിച്ചു"],
+  vaayikkuka: ["വായിക്കുക"],
+  vaayikkunnu: ["വായിക്കുന്നു"],
+  vaayichu: ["വായിച്ചു"],
   vaayan: ["വായന"],
-  arabi: ["അറബി", "അറബിക്"],
-  malayalam: ["മലയാളം", "മലയാളത്തിൽ"],
+  arabi: ["അറബി"],
+  arabic: ["അറബിക്"],
+  malayalam: ["മലയാളം"],
   arabimalayalam: ["അറബി മലയാളം"],
-  madrasa: ["മദ്രസ", "മദ്രസയിൽ"],
-  kithab: ["കിതാബ്", "കിതാബുകൾ"],
-  allah: ["അല്ലാഹു", "അല്ലാഹ്"],
+  madrasa: ["മദ്രസ"],
+  kithab: ["കിതാബ്"],
+  allah: ["അല്ലാഹ്"],
   allahu: ["അല്ലാഹു"],
-  muhammed: ["മുഹമ്മദ്", "മുഹമ്മദ് നബി"],
-  nabi: ["നബി", "നബി(സ്വ)"],
+  muhammed: ["മുഹമ്മദ്"],
+  nabi: ["നബി"],
   swalath: ["സ്വലാത്ത്"],
-  dua: ["ദുആ", "പ്രാർത്ഥന"],
+  dua: ["ദുആ"],
   chothichu: ["ചോദിച്ചു"],
   paranju: ["പറഞ്ഞു"],
   ariyilla: ["അറിയില്ല"],
   ariyaam: ["അറിയാം"],
-  cheyyuka: ["ചെയ്യുക", "ചെയ്യുന്നു", "ചെയ്തു"],
+  cheyyuka: ["ചെയ്യുക"],
   cheythu: ["ചെയ്തു"],
-  pokuka: ["പോകുക", "പോകുന്നു"],
-  varuka: ["വരുക", "വരുന്നു"],
+  pokuka: ["പോകുക"],
+  povaam: ["പോവാം"],
+  povam: ["പോവാം"],
+  pokam: ["പോകാം"],
+  pokaam: ["പോകാം"],
+  varuka: ["വരുക"],
+  varaam: ["വരാം"],
+  varam: ["വരാം"],
+  varunnu: ["വരുന്നു"],
   ippol: ["ഇപ്പോൾ"],
   appol: ["അപ്പോൾ"],
   ivide: ["ഇവിടെ"],
@@ -99,6 +131,22 @@ export const MANGLISH_TO_MALAYALAM_MAP: Record<string, string[]> = {
   sathyam: ["സത്യം"],
   sneham: ["സ്നേഹം"],
   santhosham: ["സന്തോഷം"],
+  venam: ["വേണം"],
+  venda: ["വേണ്ട"],
+  pattum: ["പറ്റും"],
+  pattila: ["പറ്റില്ല"],
+  kazhikkam: ["കഴിക്കാം"],
+  parayaam: ["പറയാം"],
+  parayam: ["പറയാം"],
+  cheyyaam: ["ചെയ്യാം"],
+  cheyyam: ["ചെയ്യാം"],
+  ariyamo: ["അറിയാമോ"],
+  enth: ["എന്ത്"],
+  enthu: ["എന്ത്"],
+  enthina: ["എന്തിനാ"],
+  enthinaan: ["എന്തിനാണ്"],
+  chodichu: ["ചോദിച്ചു"],
+  parayunnu: ["പറയുന്നു"],
 };
 
 // Malayalam consonant mapping
@@ -109,7 +157,7 @@ const CONS_MAP: Array<[string, string]> = [
   ["chh", "ഛ"],
   ["ch", "ച"],
   ["ngh", "ഘ"],
-  ["ng", "ങ"],
+  ["ng", "ങ്ങ"],
   ["nj", "ഞ"],
   ["kh", "ഖ"],
   ["gh", "ഘ"],
@@ -121,10 +169,23 @@ const CONS_MAP: Array<[string, string]> = [
   ["dh", "ധ"],
   ["ph", "ഫ"],
   ["bh", "ഭ"],
+  ["LL", "ള്ള"],
+  ["NN", "ണ്ണ"],
+  ["kk", "ക്ക"],
+  ["gg", "ഗ്ഗ"],
+  ["cc", "ച്ച"],
+  ["jj", "ജ്ജ"],
   ["tt", "ട്ട"],
   ["dd", "ഡ്ഡ"],
-  ["nn", "ണ്ണ"],
-  ["ll", "ള്ള"],
+  ["nn", "ന്ന"],
+  ["pp", "പ്പ"],
+  ["bb", "ബ്ബ"],
+  ["mm", "മ്മ"],
+  ["yy", "യ്യ"],
+  ["ll", "ല്ല"],
+  ["vv", "വ്വ"],
+  ["ss", "സ്സ"],
+  ["hh", "ഹ്ഹ"],
   ["rr", "റ്റ"],
   ["k", "ക"],
   ["g", "ഗ"],
@@ -259,15 +320,21 @@ try {
  * Convert arbitrary Manglish string into phonetic Malayalam
  */
 export function manglishToMalayalam(word: string): string[] {
-  const normalized = word.toLowerCase().trim();
+  const raw = word.trim();
+  const normalized = raw.toLowerCase();
   if (!normalized) return [];
+
+  // Preserve meaningful internal capitals (L/N/T/D), but treat an initial
+  // capital as ordinary sentence casing: `Njangalkk` behaves like `njangalkk`.
+  const fallbackText = raw[0]!.toLowerCase() + raw.slice(1);
 
   const results: string[] = [];
   const seen = new Set<string>();
 
   const add = (w: string) => {
     const t = w.trim();
-    if (t && !seen.has(t)) {
+    // Some engines return half-transliterated strings such as `eങne`.
+    if (t && !/[A-Za-z]/.test(t) && !seen.has(t)) {
       seen.add(t);
       results.push(t);
     }
@@ -299,10 +366,10 @@ export function manglishToMalayalam(word: string): string[] {
   // 3. Rule-based phonetic transliteration fallback
   let out = "";
   let i = 0;
-  const len = normalized.length;
+  const len = fallbackText.length;
 
   while (i < len) {
-    const rest = normalized.slice(i);
+    const rest = fallbackText.slice(i);
 
     // Initial independent vowel
     if (i === 0) {
@@ -315,8 +382,8 @@ export function manglishToMalayalam(word: string): string[] {
     }
 
     // Chillu at end of word
-    if (i === len - 1 && CHILLU_MAP[normalized[i]!]) {
-      out += CHILLU_MAP[normalized[i]!]!;
+    if (i === len - 1 && CHILLU_MAP[fallbackText[i]!]) {
+      out += CHILLU_MAP[fallbackText[i]!]!;
       i += 1;
       continue;
     }
@@ -326,7 +393,7 @@ export function manglishToMalayalam(word: string): string[] {
     if (cMatch) {
       const consChar = cMatch[1];
       i += cMatch[0].length;
-      const after = normalized.slice(i);
+      const after = fallbackText.slice(i);
 
       // Followed by vowel
       const vMatch = VOWEL_MATRA.find(([v]) => after.startsWith(v));
@@ -352,7 +419,7 @@ export function manglishToMalayalam(word: string): string[] {
       continue;
     }
 
-    out += normalized[i];
+    out += fallbackText[i];
     i += 1;
   }
 
@@ -699,4 +766,29 @@ export function getTransliterationCandidates(
   finalCandidates.push({ text: trimmed });
 
   return finalCandidates;
+}
+
+/**
+ * Convert a pasted word, sentence, or paragraph in one pass. Malayalam is
+ * converted as a complete string so phrase overrides and combining marks are
+ * retained. Roman/Manglish words are converted independently while URLs,
+ * email addresses, Arabic text, whitespace, and punctuation are preserved.
+ */
+export function transliteratePastedText(text: string): string {
+  const withMalayalamConverted = transliterateMalayalamToArabic(text);
+  const tokenPattern =
+    /https?:\/\/\S+|www\.\S+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|[A-Za-z]+(?:['’][A-Za-z]+)*/g;
+
+  return withMalayalamConverted.replace(tokenPattern, (token) => {
+    if (/^(?:https?:\/\/|www\.)/i.test(token) || token.includes("@")) {
+      return token;
+    }
+
+    const candidates = getTransliterationCandidates(token, "english");
+    return (
+      candidates.find(({ text: candidate }) =>
+        /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/u.test(candidate),
+      )?.text ?? token
+    );
+  });
 }

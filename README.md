@@ -126,6 +126,26 @@ ArabiMalayalam is engineered as a standalone Progressive Web App:
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Notifications**: [Sonner](https://sonner.emilkowal.ski/)
 
+### Smart Manglish ranking
+
+The editor ranks candidates through user selections, exact spelling overrides,
+registered Roman↔Malayalam corpus rows, an optional model provider, and the
+local phonetic fallback. Large datasets should remain in a backend index rather
+than being bundled into the browser.
+
+Set `VITE_MALAYALAM_TRANSLITERATION_ENDPOINT` to enable the optional provider.
+The endpoint receives a `POST` body containing `text`, `language`, `limit`, and
+the previous-word `context`, and returns Malayalam candidates:
+
+```json
+{
+  "candidates": [{ "text": "സുഖമാണോ", "score": 1 }]
+}
+```
+
+Without this environment variable, the keyboard continues to use its local
+overrides, registered corpus data, user learning, and phonetic fallback.
+
 ---
 
 ## 🚀 Getting Started

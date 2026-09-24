@@ -23,10 +23,18 @@ import {
 import { BuyMeACoffeeButton, BuyMeACoffeeIcon } from "../components/BuyMeACoffee";
 import { toast } from "sonner";
 import {
-  getTransliterationCandidates,
   transliterateToArabic,
   convertMalayalamToArabiMalayalam,
 } from "../lib/transliteration/enhancedTransliterator";
+import {
+  createHttpMalayalamProvider,
+  getSmartTransliterationCandidates,
+  learnSelection,
+  loadUserPreferences,
+  setMalayalamProvider,
+  transliterateSmartPastedText,
+  type SmartCandidate,
+} from "../lib/transliteration/smartManglishLayer";
 import {
   createDocument,
   deleteDocument,
@@ -102,7 +110,7 @@ function ArabiMalayalamEditor() {
   const [text, setText] = useState<string>("");
   const [currentWord, setCurrentWord] = useState<string>("");
   const [wordRange, setWordRange] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
-  const [suggestions, setSuggestions] = useState<Array<{ text: string; subText?: string }>>([]);
+  const [suggestions, setSuggestions] = useState<SmartCandidate[]>([]);
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState<number>(0);
   const [suggestionPos, setSuggestionPos] = useState<{ top: number; left: number } | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -133,6 +141,13 @@ function ArabiMalayalamEditor() {
   const paperRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<any>(null);
+  const previousMalayalamRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    loadUserPreferences();
+    const endpoint = import.meta.env["VITE_MALAYALAM_TRANSLITERATION_ENDPOINT"];
+    setMalayalamProvider(endpoint ? createHttpMalayalamProvider(endpoint) : null);
+  }, []);
 
   // Initialize from IndexedDB
   useEffect(() => {
@@ -190,52 +205,71 @@ function ArabiMalayalamEditor() {
 
   // Generate transliteration candidates and position dropdown directly under the word
   useEffect(() => {
+    let cancelled = false;
+
     if (!currentWord.trim()) {
       setSuggestions([]);
       setSuggestionPos(null);
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
-    try {
-      const candidates = getTransliterationCandidates(currentWord);
-      setSuggestions(candidates);
-      setActiveSuggestionIdx(0);
-
-      // Compute pixel coordinates relative to the white paper canvas
-      if (textareaRef.current && paperRef.current) {
-        const isRtl = textAlign === "right";
-        const coords = calculateCaretOffset(
-          textareaRef.current,
-          wordRange.start,
-          isRtl ? "rtl" : "ltr",
-          textAlign,
+    const updateSuggestions = async () => {
+      try {
+        const previousMalayalam = previousMalayalamRef.current;
+        const candidates = await getSmartTransliterationCandidates(
+          currentWord,
+          6,
+          previousMalayalam ? { previousMalayalam } : {},
         );
-        const paperRect = paperRef.current.getBoundingClientRect();
-        const textareaRect = textareaRef.current.getBoundingClientRect();
+        if (cancelled) return;
+        setSuggestions(candidates);
+        setActiveSuggestionIdx(0);
 
-        // Position dropdown directly under the active word
-        const relTop = textareaRect.top - paperRect.top + coords.top + coords.height + 6;
-        let relLeft = textareaRect.left - paperRect.left + coords.left;
+        // Compute pixel coordinates relative to the white paper canvas
+        if (textareaRef.current && paperRef.current) {
+          const isRtl = textAlign === "right";
+          const coords = calculateCaretOffset(
+            textareaRef.current,
+            wordRange.start,
+            isRtl ? "rtl" : "ltr",
+            textAlign,
+          );
+          const paperRect = paperRef.current.getBoundingClientRect();
+          const textareaRect = textareaRef.current.getBoundingClientRect();
 
-        if (isRtl) {
-          // In RTL mode, align the dropdown to sit nicely beneath the right-aligned word
-          relLeft = relLeft - 180;
+          // Position dropdown directly under the active word
+          const relTop = textareaRect.top - paperRect.top + coords.top + coords.height + 6;
+          let relLeft = textareaRect.left - paperRect.left + coords.left;
+
+          if (isRtl) {
+            // In RTL mode, align the dropdown to sit nicely beneath the right-aligned word
+            relLeft = relLeft - 180;
+          }
+
+          // Ensure dropdown doesn't overflow the paper boundary
+          const minLeft = 16;
+          const maxLeft = Math.max(16, paperRect.width - 210);
+          relLeft = Math.max(minLeft, Math.min(maxLeft, relLeft));
+
+          setSuggestionPos({ top: relTop, left: relLeft });
         }
-
-        // Ensure dropdown doesn't overflow the paper boundary
-        const minLeft = 16;
-        const maxLeft = Math.max(16, paperRect.width - 210);
-        relLeft = Math.max(minLeft, Math.min(maxLeft, relLeft));
-
-        setSuggestionPos({ top: relTop, left: relLeft });
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Transliteration / caret calculation error:", err);
+        }
       }
-    } catch (err) {
-      console.error("Transliteration / caret calculation error:", err);
-    }
+    };
+
+    void updateSuggestions();
+    return () => {
+      cancelled = true;
+    };
   }, [currentWord, wordRange.start, textAlign]);
 
   // Insert chosen suggestion into text
-  const applySuggestion = (suggestion: { text: string; subText?: string }) => {
+  const applySuggestion = (suggestion: SmartCandidate) => {
     if (!textareaRef.current) return;
     const el = textareaRef.current;
     const before = text.slice(0, wordRange.start);
@@ -246,6 +280,11 @@ function ArabiMalayalamEditor() {
 
     setHistoryStack((prev) => [...prev, updated]);
     setRedoStack([]);
+
+    if (suggestion.malayalam) {
+      learnSelection(currentWord, suggestion.malayalam);
+      previousMalayalamRef.current = suggestion.malayalam;
+    }
 
     setText(updated);
     setCurrentWord("");
@@ -260,7 +299,7 @@ function ArabiMalayalamEditor() {
   };
 
   // Keyboard navigation for suggestions dropdown
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (suggestions.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -298,6 +337,24 @@ function ArabiMalayalamEditor() {
         return;
       }
     }
+
+    // If a remote/corpus lookup is still pending, Space should still commit
+    // the best available transliteration instead of leaving Roman text behind.
+    if (e.key === " " && currentWord.trim()) {
+      e.preventDefault();
+      const requestedWord = currentWord;
+      const previousMalayalam = previousMalayalamRef.current;
+      const candidates = await getSmartTransliterationCandidates(
+        requestedWord,
+        6,
+        previousMalayalam ? { previousMalayalam } : {},
+      );
+      const activeText = textareaRef.current?.value.slice(wordRange.start, wordRange.end);
+      if (activeText === requestedWord) {
+        const target = candidates[0];
+        if (target) applySuggestion(target);
+      }
+    }
   };
 
   // Handle typing & isolate active word before caret
@@ -324,19 +381,26 @@ function ArabiMalayalamEditor() {
     }
   };
 
-  // Convert pasted Malayalam immediately, including complete sentences and paragraphs.
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  // Convert pasted Malayalam or Manglish, including complete sentences and paragraphs.
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const pastedText = e.clipboardData.getData("text/plain");
     if (!pastedText) return;
 
     e.preventDefault();
 
     const el = e.currentTarget;
-    const selectionStart = el.selectionStart;
-    const selectionEnd = el.selectionEnd;
-    const convertedText = transliterateToArabic(pastedText);
+    const valueBeforeConversion = el.value;
+    const initialSelectionStart = el.selectionStart;
+    const initialSelectionEnd = el.selectionEnd;
+    const convertedText = await transliterateSmartPastedText(pastedText);
+    const valueUnchanged = el.value === valueBeforeConversion;
+    const selectionStart = valueUnchanged ? initialSelectionStart : el.selectionStart;
+    const selectionEnd = valueUnchanged ? initialSelectionEnd : el.selectionEnd;
+    const currentValue = el.value;
     const updated =
-      text.slice(0, selectionStart) + convertedText + text.slice(selectionEnd);
+      currentValue.slice(0, selectionStart) +
+      convertedText +
+      currentValue.slice(selectionEnd);
     const newCaretPosition = selectionStart + convertedText.length;
 
     setHistoryStack((prev) => [...prev, updated]);
@@ -387,6 +451,7 @@ function ArabiMalayalamEditor() {
     setText("");
     setHistoryStack([""]);
     setRedoStack([]);
+    previousMalayalamRef.current = undefined;
     const docs = await listDocuments();
     setDocuments(docs);
     toast.success("Created new document");
@@ -400,6 +465,7 @@ function ArabiMalayalamEditor() {
     setText(doc.plainText || "");
     setHistoryStack([doc.plainText || ""]);
     setRedoStack([]);
+    previousMalayalamRef.current = undefined;
     setSuggestions([]);
     setSuggestionPos(null);
   };
