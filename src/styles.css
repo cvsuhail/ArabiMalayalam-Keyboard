@@ -1,0 +1,240 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * ArabiType design system.
+ * Calm, paper-like writing app. Deep Kerala green accent, warm neutral greys.
+ * All colors are oklch tokens; never hardcode colors in components.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-paper: var(--paper);
+  --color-paper-foreground: var(--paper-foreground);
+  --color-workspace: var(--workspace);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-arabi:
+    "Noto Naskh Arabic", "Amiri", "Scheherazade New", "Noto Sans Arabic", serif;
+  --font-malayalam: "Noto Sans Malayalam", "Manjari", sans-serif;
+  --shadow-paper: 0 1px 2px oklch(0.206 0.005 145 / 6%), 0 8px 24px -12px oklch(0.206 0.005 145 / 10%);
+  --shadow-pop: 0 4px 16px -4px oklch(0.206 0.005 145 / 14%), 0 1px 3px oklch(0.206 0.005 145 / 8%);
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: oklch(0.9691 0.0017 145.56);
+  --foreground: oklch(0.206 0.005 145.39);
+  --workspace: oklch(0.9691 0.0017 145.56);
+  --paper: oklch(1 0 0);
+  --paper-foreground: oklch(0.206 0.005 145.39);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.206 0.005 145.39);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.206 0.005 145.39);
+  --primary: oklch(0.4712 0.0963 157.26);
+  --primary-foreground: oklch(0.985 0.002 145);
+  --primary-soft: oklch(0.9436 0.0175 153.56);
+  --secondary: oklch(0.9436 0.0175 153.56);
+  --secondary-foreground: oklch(0.4057 0.0788 159.83);
+  --muted: oklch(0.9552 0.0025 145.5);
+  --muted-foreground: oklch(0.5396 0.0086 151.76);
+  --accent: oklch(0.9436 0.0175 153.56);
+  --accent-foreground: oklch(0.4057 0.0788 159.83);
+  --destructive: oklch(0.5966 0.1818 24.51);
+  --destructive-foreground: oklch(0.985 0.002 145);
+  --border: oklch(0.9116 0.0069 145.52);
+  --input: oklch(0.9116 0.0069 145.52);
+  --ring: oklch(0.4712 0.0963 157.26);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.206 0.005 145.39);
+  --sidebar-accent: oklch(0.9436 0.0175 153.56);
+  --sidebar-accent-foreground: oklch(0.4057 0.0788 159.83);
+  --sidebar-border: oklch(0.9116 0.0069 145.52);
+}
+
+.dark {
+  --background: oklch(0.178 0.0063 156.53);
+  --foreground: oklch(0.945 0.004 150);
+  --workspace: oklch(0.178 0.0063 156.53);
+  --paper: oklch(0.2181 0.006 156.7);
+  --paper-foreground: oklch(0.945 0.004 150);
+  --card: oklch(0.2181 0.006 156.7);
+  --card-foreground: oklch(0.945 0.004 150);
+  --popover: oklch(0.2431 0.007 157);
+  --popover-foreground: oklch(0.945 0.004 150);
+  --primary: oklch(0.72 0.11 157);
+  --primary-foreground: oklch(0.178 0.0063 156.53);
+  --primary-soft: oklch(0.2866 0.028 157);
+  --secondary: oklch(0.2666 0.009 159.43);
+  --secondary-foreground: oklch(0.945 0.004 150);
+  --muted: oklch(0.2666 0.009 159.43);
+  --muted-foreground: oklch(0.7083 0.0107 155.01);
+  --accent: oklch(0.2866 0.028 157);
+  --accent-foreground: oklch(0.86 0.07 157);
+  --destructive: oklch(0.66 0.17 24.5);
+  --destructive-foreground: oklch(0.985 0.002 145);
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.72 0.11 157);
+  --sidebar: oklch(0.2031 0.006 156.6);
+  --sidebar-foreground: oklch(0.945 0.004 150);
+  --sidebar-accent: oklch(0.2866 0.028 157);
+  --sidebar-accent-foreground: oklch(0.86 0.07 157);
+  --sidebar-border: oklch(1 0 0 / 10%);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@utility text-arabi {
+  font-family: var(--font-arabi);
+  unicode-bidi: plaintext;
+  line-height: 2;
+}
+
+@utility bidi-plaintext {
+  unicode-bidi: plaintext;
+}
+
+/* Editor (ProseMirror) typography */
+.arabitype-editor .ProseMirror {
+  outline: none;
+  unicode-bidi: plaintext;
+  min-height: 40vh;
+}
+
+.arabitype-editor .ProseMirror p {
+  margin: 0 0 0.75em;
+  unicode-bidi: plaintext;
+}
+
+.arabitype-editor .ProseMirror h1 {
+  font-size: 1.85em;
+  font-weight: 600;
+  margin: 1em 0 0.5em;
+}
+
+.arabitype-editor .ProseMirror h2 {
+  font-size: 1.45em;
+  font-weight: 600;
+  margin: 1em 0 0.5em;
+}
+
+.arabitype-editor .ProseMirror h3 {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin: 1em 0 0.5em;
+}
+
+.arabitype-editor .ProseMirror ul,
+.arabitype-editor .ProseMirror ol {
+  padding-inline-start: 1.5em;
+  margin: 0 0 0.75em;
+}
+
+.arabitype-editor .ProseMirror ul {
+  list-style: disc;
+}
+
+.arabitype-editor .ProseMirror ol {
+  list-style: decimal;
+}
+
+.arabitype-editor .ProseMirror blockquote {
+  border-inline-start: 3px solid var(--color-border);
+  padding-inline-start: 1em;
+  color: var(--color-muted-foreground);
+  margin: 0 0 0.75em;
+}
+
+.arabitype-editor .ProseMirror a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.arabitype-editor .ProseMirror img {
+  max-width: 100%;
+  border-radius: var(--radius-md);
+}
+
+.arabitype-editor .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 0 1em;
+}
+
+.arabitype-editor .ProseMirror th,
+.arabitype-editor .ProseMirror td {
+  border: 1px solid var(--color-border);
+  padding: 0.5em 0.65em;
+}
+
+.arabitype-editor .ProseMirror th {
+  background: var(--color-muted);
+  font-weight: 600;
+}
+
+.arabitype-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-muted-foreground);
+  float: inline-start;
+  height: 0;
+  pointer-events: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-surface {
+    box-shadow: none !important;
+    border: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+}
