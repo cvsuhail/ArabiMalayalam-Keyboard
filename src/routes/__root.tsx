@@ -74,6 +74,85 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+const webAppSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "ArabiMalayalam",
+  alternateName: [
+    "Arabi Malayalam Keyboard",
+    "Arabi-Malayalam Transliterator",
+    "അറബി-മലയാളം കീബോർഡ്",
+    "اَرَبِ مَلَیَالَمْ",
+  ],
+  url: "https://arabimalayalam.online/",
+  applicationCategory: "UtilitiesApplication",
+  operatingSystem: "All",
+  browserRequirements: "Requires JavaScript. Requires HTML5.",
+  softwareVersion: "1.0.0",
+  description:
+    "Intelligent, real-time Arabi-Malayalam transliterator and typing tool. Convert English (Manglish), Malayalam, and Arabic directly into authentic Arabi-Malayalam script with offline PWA support.",
+  inLanguage: ["en", "ml", "ar"],
+  author: {
+    "@type": "Person",
+    name: "CvSuhail",
+    url: "https://www.cvsuhail.online/",
+  },
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  featureList: [
+    "Real-time Manglish (English) to Arabi-Malayalam transliteration",
+    "Direct Malayalam Unicode to Arabi-Malayalam script conversion",
+    "Standard Arabic to Arabi-Malayalam script adaptation",
+    "Full Arabi-Malayalam phonetic alphabet support (ݧ, ڞ, ڰ, ڔ, ڶ, ڹ, etc.)",
+    "Short vowel diacritics support (e mark ٘ and o mark ٗ)",
+    "PWA offline document editor with IndexedDB storage",
+    "Speech-to-text Voice typing",
+    "Multiple classical Arabic & Malayalam typography fonts",
+  ],
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What is Arabi-Malayalam (അറബി-മലയാളം)?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Arabi-Malayalam is a historical writing system developed in the Malabar region of Kerala, India. It adapts the Arabic alphabet with modified characters (such as ݧ for ഞ, ڞ for ങ, ڰ for ഗ, ڔ for റ, ڶ for ള, ڹ for ണ) to accurately represent all Malayalam phonetic sounds.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How does the ArabiMalayalam keyboard transliteration work?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Simply type in English (Manglish like 'njan', 'sukhamanu', 'keralam'), Malayalam script ('ഞാൻ', 'കേരളം'), or Arabic. The intelligent transliterator provides real-time Arabi-Malayalam suggestions beneath your active cursor.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I install ArabiMalayalam as an app on my phone?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, ArabiMalayalam is a full Progressive Web App (PWA). You can install it on iOS Safari (Share > Add to Home Screen) or Android Chrome with offline support.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Does ArabiMalayalam require an internet connection?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No! Once loaded, ArabiMalayalam runs completely in your device browser. Transliteration and document auto-saving in IndexedDB work 100% offline.",
+      },
+    },
+  ],
+};
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -89,30 +168,50 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Convert Arabic, English, and Malayalam directly to authentic Arabi-Malayalam script with real-time transliteration and a minimal Google Docs-style interface.",
+          "Instant intelligent Arabi-Malayalam keyboard and transliterator. Convert English (Manglish), Malayalam, and Arabic directly into authentic Arabi-Malayalam script with offline PWA support.",
+      },
+      {
+        name: "keywords",
+        content:
+          "arabi malayalam, arabi malayalam keyboard, arabi-malayalam transliteration, manglish to arabi malayalam, malayalam to arabi malayalam, arabic to arabi malayalam, mappila malayalam, arabi malayalam fonts, pwa keyboard, cvsuhail, അറബി മലയാളം, اَرَبِ مَلَیَالَمْ",
       },
       { name: "author", content: "CvSuhail" },
+      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      { name: "googlebot", content: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" },
+      { name: "bingbot", content: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" },
+      { property: "og:site_name", content: "ArabiMalayalam" },
+      { property: "og:url", content: "https://arabimalayalam.online/" },
       { property: "og:title", content: "ArabiMalayalam - Arabic, English & Malayalam to Arabi-Malayalam" },
       {
         property: "og:description",
         content:
-          "Easily convert Arabic, English, and Malayalam to Arabi-Malayalam script in real-time.",
+          "Instant intelligent Arabi-Malayalam keyboard and transliterator. Convert English (Manglish), Malayalam, and Arabic directly into authentic Arabi-Malayalam script.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:locale", content: "en_US" },
+      { property: "og:locale:alternate", content: "ml_IN" },
+      { property: "og:locale:alternate", content: "ar_SA" },
       { property: "og:image", content: "/og-image.png" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "ArabiMalayalam" },
+      { property: "og:image:alt", content: "ArabiMalayalam Keyboard & Editor" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@CvSuhail" },
+      { name: "twitter:creator", content: "@CvSuhail" },
       { name: "twitter:title", content: "ArabiMalayalam | Arabic, English & Malayalam to Arabi-Malayalam" },
       {
         name: "twitter:description",
         content:
-          "Easily convert Arabic, English, and Malayalam to Arabi-Malayalam script in real-time.",
+          "Easily convert Arabic, English, and Malayalam to Arabi-Malayalam script in real-time with offline PWA support.",
       },
       { name: "twitter:image", content: "/og-image.png" },
     ],
     links: [
+      { rel: "canonical", href: "https://arabimalayalam.online/" },
+      { rel: "alternate", href: "https://arabimalayalam.online/", hrefLang: "x-default" },
+      { rel: "alternate", href: "https://arabimalayalam.online/", hrefLang: "en" },
+      { rel: "alternate", href: "https://arabimalayalam.online/", hrefLang: "ml" },
+      { rel: "alternate", href: "https://arabimalayalam.online/", hrefLang: "ar" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -130,6 +229,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "shortcut icon", href: "/favicon.png", type: "image/png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(webAppSchema),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(faqSchema),
+      },
     ],
   }),
   shellComponent: RootShell,

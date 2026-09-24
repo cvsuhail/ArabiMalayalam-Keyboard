@@ -600,9 +600,9 @@ function ArabiMalayalamEditor() {
               alt="ArabiMalayalam Logo"
               className="w-10 h-10 object-contain rounded-xl shadow-xs shrink-0"
             />
-            <span className="font-extrabold text-xl tracking-tight text-[#202124] dark:text-[#e8eaed]">
+            <h1 className="font-extrabold text-xl tracking-tight text-[#202124] dark:text-[#e8eaed] m-0">
               ArabiMalayalam
-            </span>
+            </h1>
           </div>
 
           {/* New File Button */}
