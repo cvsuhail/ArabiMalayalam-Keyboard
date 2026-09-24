@@ -116,7 +116,9 @@ function ArabiMalayalamEditor() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   // Formatting state: RTL by default for Arabi-Malayalam, LTR for Manglish
-  const [selectedFont, setSelectedFont] = useState<(typeof FONT_FAMILIES)[number]>(FONT_FAMILIES[0]!);
+  const [selectedFont, setSelectedFont] = useState<(typeof FONT_FAMILIES)[number]>(
+    FONT_FAMILIES[0]!,
+  );
   const [fontSize, setFontSize] = useState<number>(26);
   const [isBold, setIsBold] = useState<boolean>(false);
   const [isItalic, setIsItalic] = useState<boolean>(false);
@@ -398,9 +400,7 @@ function ArabiMalayalamEditor() {
     const selectionEnd = valueUnchanged ? initialSelectionEnd : el.selectionEnd;
     const currentValue = el.value;
     const updated =
-      currentValue.slice(0, selectionStart) +
-      convertedText +
-      currentValue.slice(selectionEnd);
+      currentValue.slice(0, selectionStart) + convertedText + currentValue.slice(selectionEnd);
     const newCaretPosition = selectionStart + convertedText.length;
 
     setHistoryStack((prev) => [...prev, updated]);
@@ -673,6 +673,9 @@ function ArabiMalayalamEditor() {
             Tell us your feedback
           </button>
           <div className="text-center text-xs font-bold text-[#80868b] dark:text-[#9aa0a6] pt-1">
+            <p className="mb-2 font-medium leading-relaxed">
+              Type Manglish, Malayalam, or Arabic to create Arabi-Malayalam text.
+            </p>
             Build with ❤️ by{" "}
             <a
               href="https://www.cvsuhail.online/"
@@ -697,9 +700,14 @@ function ArabiMalayalamEditor() {
               alt="ArabiMalayalam Logo"
               className="w-10 h-10 object-contain rounded-xl shadow-xs shrink-0"
             />
-            <h1 className="font-extrabold text-xl tracking-tight text-[#202124] dark:text-[#e8eaed] m-0">
-              ArabiMalayalam
-            </h1>
+            <div className="min-w-0">
+              <h1 className="font-extrabold text-lg tracking-tight text-[#202124] dark:text-[#e8eaed] m-0 leading-tight">
+                Arabi-Malayalam Keyboard
+              </h1>
+              <p className="mt-0.5 text-[10px] font-semibold text-[#80868b] dark:text-[#9aa0a6]">
+                Manglish · Malayalam · Arabic
+              </p>
+            </div>
           </div>
 
           {/* New File Button */}
@@ -749,6 +757,9 @@ function ArabiMalayalamEditor() {
 
         {/* Bottom of Sidebar */}
         <div className="p-4 border-t border-[#f1f3f4] dark:border-[#2d3135] flex flex-col gap-2.5">
+          <p className="text-xs font-medium leading-relaxed text-[#80868b] dark:text-[#9aa0a6]">
+            Type Manglish, Malayalam, or Arabic and get instant Arabi-Malayalam suggestions.
+          </p>
           <p className="text-xs font-bold leading-tight text-[#80868b] dark:text-[#9aa0a6]">
             Your files are stored only in this browser
           </p>
@@ -833,7 +844,10 @@ function ArabiMalayalamEditor() {
                   className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30 transition-colors cursor-pointer"
                   title="Undo"
                 >
-                  <Undo2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#202124] dark:text-[#e8eaed]" strokeWidth={2.5} />
+                  <Undo2
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-[#202124] dark:text-[#e8eaed]"
+                    strokeWidth={2.5}
+                  />
                 </button>
 
                 {/* Redo */}
@@ -843,7 +857,10 @@ function ArabiMalayalamEditor() {
                   className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30 transition-colors cursor-pointer"
                   title="Redo"
                 >
-                  <Redo2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#202124] dark:text-[#e8eaed]" strokeWidth={2.5} />
+                  <Redo2
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-[#202124] dark:text-[#e8eaed]"
+                    strokeWidth={2.5}
+                  />
                 </button>
 
                 <div className="h-4 sm:h-5 w-[1.5px] bg-[#cfd4dc] dark:bg-[#3c4043] mx-0.5 sm:mx-1" />
@@ -854,8 +871,13 @@ function ArabiMalayalamEditor() {
                     onClick={() => setShowFontDropdown(!showFontDropdown)}
                     className="px-2 sm:px-3 py-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#202124] dark:text-[#e8eaed] transition-colors cursor-pointer"
                   >
-                    <span className="truncate max-w-[70px] sm:max-w-none">{selectedFont.name.replace(/ \(.*\)/, "")}</span>
-                    <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#202124] dark:text-[#e8eaed]" strokeWidth={2.5} />
+                    <span className="truncate max-w-[70px] sm:max-w-none">
+                      {selectedFont.name.replace(/ \(.*\)/, "")}
+                    </span>
+                    <ChevronDown
+                      className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#202124] dark:text-[#e8eaed]"
+                      strokeWidth={2.5}
+                    />
                   </button>
 
                   {showFontDropdown && (
@@ -929,9 +951,7 @@ function ArabiMalayalamEditor() {
 
                 {/* Align Center */}
                 <button
-                  onClick={() =>
-                    setTextAlign((prev) => (prev === "center" ? "right" : "center"))
-                  }
+                  onClick={() => setTextAlign((prev) => (prev === "center" ? "right" : "center"))}
                   className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg font-bold transition-colors cursor-pointer ${
                     textAlign === "center"
                       ? "bg-[#137333] text-white shadow-xs"
@@ -967,7 +987,8 @@ function ArabiMalayalamEditor() {
                 onPaste={handlePaste}
                 onKeyDown={handleKeyDown}
                 dir={textAlign === "right" ? "rtl" : "ltr"}
-                placeholder=""
+                aria-label="Arabi-Malayalam transliteration editor"
+                placeholder="Type Manglish (njan, evide, engane), Malayalam, or Arabic…"
                 style={{
                   fontFamily: selectedFont.font,
                   fontSize: `${fontSize}px`,
@@ -1011,7 +1032,9 @@ function ArabiMalayalamEditor() {
                               className={`text-lg font-bold truncate ${
                                 isLastCandidate ? "opacity-75 font-mono text-base" : ""
                               }`}
-                              style={{ fontFamily: isLastCandidate ? "monospace" : selectedFont.font }}
+                              style={{
+                                fontFamily: isLastCandidate ? "monospace" : selectedFont.font,
+                              }}
                             >
                               {sug.text}
                             </span>
@@ -1124,7 +1147,9 @@ function ArabiMalayalamEditor() {
                   <MessageCircle className="w-5 h-5" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-[#202124] dark:text-[#e8eaed]">Tell us your feedback</h3>
+                  <h3 className="font-extrabold text-base text-[#202124] dark:text-[#e8eaed]">
+                    Tell us your feedback
+                  </h3>
                   <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] font-medium">
                     Direct to WhatsApp (+91 95627 70397)
                   </p>
@@ -1180,7 +1205,9 @@ function ArabiMalayalamEditor() {
                   <Trash2 className="w-5 h-5" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-[#202124] dark:text-[#e8eaed]">Delete document?</h3>
+                  <h3 className="font-extrabold text-base text-[#202124] dark:text-[#e8eaed]">
+                    Delete document?
+                  </h3>
                   <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] truncate max-w-[190px] font-medium">
                     "{docToDelete.title}"
                   </p>
@@ -1195,7 +1222,8 @@ function ArabiMalayalamEditor() {
             </div>
 
             <p className="text-xs font-medium text-[#5f6368] dark:text-[#9aa0a6] leading-relaxed">
-              Are you sure you want to delete this document? All content in this document will be permanently deleted from your browser storage.
+              Are you sure you want to delete this document? All content in this document will be
+              permanently deleted from your browser storage.
             </p>
 
             <div className="flex justify-end gap-2 mt-1">

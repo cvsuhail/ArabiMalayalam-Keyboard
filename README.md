@@ -1,25 +1,24 @@
-
 <div align="center">
 
   <img src="public/favicon.png" alt="ArabiMalayalam Logo" width="100" height="100" style="border-radius: 22px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);" />
 
-  # ArabiMalayalam (അറബി-മലയാളം)
-  
-  **Intelligent, real-time Arabi-Malayalam transliterator, phonetic keyboard & document editor.**
+# ArabiMalayalam (അറബി-മലയാളം)
 
-  [![PWA Ready](https://img.shields.io/badge/PWA-Ready-137333?style=for-the-badge&logo=pwa&logoColor=white)](https://arabimalayalam.online/)
-  [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-suhailcv-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/suhailcv)
-  [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-  [![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
-  [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-  [![Offline First](https://img.shields.io/badge/Offline-IndexedDB-blueviolet?style=for-the-badge)](https://dexie.org/)
-  [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
-  [![Created by](https://img.shields.io/badge/Author-CvSuhail-137333?style=for-the-badge&logo=safari&logoColor=white)](https://www.cvsuhail.online/)
+**Intelligent, real-time Arabi-Malayalam transliterator, phonetic keyboard & document editor.**
+
+[![PWA Ready](https://img.shields.io/badge/PWA-Ready-137333?style=for-the-badge&logo=pwa&logoColor=white)](https://arabi-malayalam.cvsuhail.online/)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-suhailcv-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/suhailcv)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Offline First](https://img.shields.io/badge/Offline-IndexedDB-blueviolet?style=for-the-badge)](https://dexie.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+[![Created by](https://img.shields.io/badge/Author-CvSuhail-137333?style=for-the-badge&logo=safari&logoColor=white)](https://www.cvsuhail.online/)
 
   <br />
 
   <p align="center">
-    <a href="https://arabimalayalam.online/"><strong>Live Web App</strong></a> •
+    <a href="https://arabi-malayalam.cvsuhail.online/"><strong>Live Web App</strong></a> •
     <a href="#-key-features"><strong>Key Features</strong></a> •
     <a href="#-arabi-malayalam-script-matrix"><strong>Script Matrix</strong></a> •
     <a href="#-pwa-mobile-experience"><strong>PWA Install</strong></a> •
@@ -35,7 +34,7 @@
 
 ## 📖 Overview
 
-**ArabiMalayalam** is a modern, high-performance web and mobile application designed to preserve and revitalize **Arabi-Malayalam** (അറബി-മലയാളം / اَرَبِ مَلَیَالَمْ) — the traditional writing system of the Mappila community in Malabar, Kerala. 
+**ArabiMalayalam** is a modern, high-performance web and mobile application designed to preserve and revitalize **Arabi-Malayalam** (അറബി-മലയാളം / اَرَبِ مَلَیَالَمْ) — the traditional writing system of the Mappila community in Malabar, Kerala.
 
 It enables effortless typing and real-time transliteration from **English (Manglish)**, **Malayalam Unicode**, and **Standard Arabic** into authentic Arabi-Malayalam script, featuring classical font rendering, vowel diacritics, and offline Progressive Web App (PWA) functionality.
 
@@ -62,7 +61,7 @@ It enables effortless typing and real-time transliteration from **English (Mangl
   - Automatic background saving powered by browser **IndexedDB**.
   - All transliteration executes client-side; zero data sent to external servers.
 - **🎨 Classical Typography & Fonts**:
-  - Preview your writing in authentic calligraphy and typefaces: *Amiri*, *Noto Naskh Arabic*, *Scheherazade New*, *Lateef (Nastaliq)*, *Aref Ruqaa*, *Noto Sans Arabic*, *Harmattan*, and *Reem Kufi*.
+  - Preview your writing in authentic calligraphy and typefaces: _Amiri_, _Noto Naskh Arabic_, _Scheherazade New_, _Lateef (Nastaliq)_, _Aref Ruqaa_, _Noto Sans Arabic_, _Harmattan_, and _Reem Kufi_.
 - **🎙️ Speech-to-Text Voice Typing**:
   - Built-in microphone dictation for fast hands-free writing.
 - **📤 Export & Sharing**:
@@ -74,26 +73,26 @@ It enables effortless typing and real-time transliteration from **English (Mangl
 
 Arabi-Malayalam adapts the Arabic alphabet to represent Dravidian Malayalam phonetic sounds that do not exist in standard Arabic:
 
-| Malayalam Letter | Arabi-Malayalam Glyph | Unicode Code | Name / Phonetic Sound | Example Transliteration |
-|:----------------:|:---------------------:|:------------:|:----------------------|:------------------------|
-| **ഞ** | **ݧ** | `U+0767` | Arabic letter Noon with two dots above (`nja`) | *njan* ➔ `ݧان` |
-| **ങ** | **ڞ** | `U+069E` | Arabic letter Sad with three dots above (`nga`) | *thenga* ➔ `تَيڞَ` |
-| **ഗ** | **ڰ** | `U+06B0` | Arabic letter Gaf with ring (`ga`) | *keralam* ➔ `كِيرَڶَم` |
-| **റ** | **ڔ** | `U+0694` | Arabic letter Reh with small V below (`rra`) | *paranju* ➔ `پَرَݧُ` |
-| **ള** | **ڶ** | `U+06F6` | Arabic letter Lam with small V (`lla`) | *vellam* ➔ `وَيڶَّم` |
-| **ണ** | **ڹ** | `U+06B9` | Arabic letter Noon with retroflex dot (`Nna`) | *kannu* ➔ `كَنُّ` |
-| **ഴ** | **ژ** | `U+0698` | Arabic letter Jeh / Zhe (`zha`) | *mazha* ➔ `مَژَ` |
-| **ട** | **ٹ** | `U+0679` | Arabic letter Tteh (`Tta`) | *paatam* ➔ `پَاٹَم` |
-| **ഡ** | **ڈ** | `U+0688` | Arabic letter Ddal (`Dda`) | *veedu* ➔ `وِيڈ` |
-| **പ** | **پ** | `U+067E` | Arabic letter Peh (`pa`) | *poyi* ➔ `پَويِ` |
-| **ച** | **چ** | `U+0686` | Arabic letter Tcheh (`cha`) | *cheythath* ➔ `چَيتَتْ` |
+| Malayalam Letter | Arabi-Malayalam Glyph | Unicode Code | Name / Phonetic Sound                           | Example Transliteration |
+| :--------------: | :-------------------: | :----------: | :---------------------------------------------- | :---------------------- |
+|      **ഞ**       |         **ݧ**         |   `U+0767`   | Arabic letter Noon with two dots above (`nja`)  | _njan_ ➔ `ݧان`          |
+|      **ങ**       |         **ڞ**         |   `U+069E`   | Arabic letter Sad with three dots above (`nga`) | _thenga_ ➔ `تَيڞَ`      |
+|      **ഗ**       |         **ڰ**         |   `U+06B0`   | Arabic letter Gaf with ring (`ga`)              | _keralam_ ➔ `كِيرَڶَم`  |
+|      **റ**       |         **ڔ**         |   `U+0694`   | Arabic letter Reh with small V below (`rra`)    | _paranju_ ➔ `پَرَݧُ`    |
+|      **ള**       |         **ڶ**         |   `U+06F6`   | Arabic letter Lam with small V (`lla`)          | _vellam_ ➔ `وَيڶَّم`    |
+|      **ണ**       |         **ڹ**         |   `U+06B9`   | Arabic letter Noon with retroflex dot (`Nna`)   | _kannu_ ➔ `كَنُّ`       |
+|      **ഴ**       |         **ژ**         |   `U+0698`   | Arabic letter Jeh / Zhe (`zha`)                 | _mazha_ ➔ `مَژَ`        |
+|      **ട**       |         **ٹ**         |   `U+0679`   | Arabic letter Tteh (`Tta`)                      | _paatam_ ➔ `پَاٹَم`     |
+|      **ഡ**       |         **ڈ**         |   `U+0688`   | Arabic letter Ddal (`Dda`)                      | _veedu_ ➔ `وِيڈ`        |
+|      **പ**       |         **پ**         |   `U+067E`   | Arabic letter Peh (`pa`)                        | _poyi_ ➔ `پَويِ`        |
+|      **ച**       |         **چ**         |   `U+0686`   | Arabic letter Tcheh (`cha`)                     | _cheythath_ ➔ `چَيتَتْ` |
 
 ### Special Vowel Marks
 
-| Sound | Diacritic | Unicode | Usage |
-|:-----:|:---------:|:-------:|:------|
-| **എ (Short e)** | `٘` | `U+0658` | Small inverted mark below letter to represent short Dravidian 'e' |
-| **ഒ (Short o)** | `ٗ` | `U+0657` | Inverted damma mark above letter to represent short Dravidian 'o' |
+|      Sound      | Diacritic | Unicode  | Usage                                                             |
+| :-------------: | :-------: | :------: | :---------------------------------------------------------------- |
+| **എ (Short e)** |    `٘`    | `U+0658` | Small inverted mark below letter to represent short Dravidian 'e' |
+| **ഒ (Short o)** |    `ٗ`    | `U+0657` | Inverted damma mark above letter to represent short Dravidian 'o' |
 
 ---
 
@@ -102,7 +101,7 @@ Arabi-Malayalam adapts the Arabic alphabet to represent Dravidian Malayalam phon
 ArabiMalayalam is engineered as a standalone Progressive Web App:
 
 - **iOS (iPhone/iPad)**:
-  1. Open [arabimalayalam.online](https://arabimalayalam.online/) in **Safari**.
+  1. Open [arabi-malayalam.cvsuhail.online](https://arabi-malayalam.cvsuhail.online/) in **Safari**.
   2. Tap the **Share** button ($\uparrow$) at the bottom of Safari.
   3. Scroll down and tap **Add to Home Screen**.
 - **Android**:
@@ -158,23 +157,28 @@ overrides, registered corpus data, user learning, and phonetic fallback.
 ### Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/CvSuhail/arabiMalayalamKeyboard.git
    cd arabiMalayalamKeyboard
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 3. **Start the development server**:
+
    ```bash
    npm run dev
    ```
+
    Open [http://localhost:8080](http://localhost:8080) in your browser.
 
 4. **Build for production**:
+
    ```bash
    npm run build
    ```
@@ -192,14 +196,18 @@ ArabiMalayalam includes enterprise-grade optimizations for traditional search en
 
 - **Structured Data (JSON-LD)**:
   - `WebApplication` schema with full feature list and system specifications.
-  - `FAQPage` schema addressing common questions about Arabi-Malayalam script.
+  - `WebSite` schema describing the canonical keyboard website.
   - `Person` author schema linking directly to creator profiles.
 - **`llms.txt` Standard**:
   - Implements the modern `/llms.txt` standard for AI web crawlers (GPTBot, ClaudeBot, PerplexityBot) with full phonetic alphabet specifications and orthography guides.
 - **Open Graph & Twitter Cards**:
   - Rich 1200×630 social preview cards (`/og-image.png`).
 - **Sitemap & Robots**:
-  - Auto-configured `sitemap.xml` with multilingual alternate hints (`en`, `ml`, `ar`) and crawl directives in `robots.txt`.
+  - Canonical-domain `sitemap.xml` and crawl directives in `robots.txt`.
+
+### Google Tag Manager
+
+Set `VITE_GTM_ID` to your Tag Manager container ID (for example, `GTM-XXXXXXX`) in the production deployment environment. The app then renders the official loader high in `<head>` and the `<noscript>` fallback immediately after `<body>`. Invalid or missing IDs are ignored, so placeholder analytics are never sent.
 
 ---
 

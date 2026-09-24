@@ -2,7 +2,9 @@
   "name": "ArabiMalayalam",
   "short_name": "ArabiMalayalam",
   "description": "Real-time Arabi-Malayalam script transliterator and editor for English, Malayalam and Arabic.",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#137333",
@@ -35,5 +37,5 @@
   ],
   "categories": ["utilities", "productivity"],
   "dir": "auto",
-  "lang": "en"
+  "lang": "en-IN"
 }

@@ -14,6 +14,40 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "../components/ui/sonner";
 import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
 
+const SITE_URL = "https://arabi-malayalam.cvsuhail.online";
+const SOCIAL_IMAGE_URL = `${SITE_URL}/og-image.png`;
+
+function getGoogleTagManagerId(): string | undefined {
+  const candidate = import.meta.env["VITE_GTM_ID"]?.trim();
+  return candidate && /^GTM-[A-Z0-9]+$/i.test(candidate) ? candidate.toUpperCase() : undefined;
+}
+
+function GoogleTagManagerHead() {
+  const containerId = getGoogleTagManagerId();
+  if (!containerId) return null;
+
+  const script = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${containerId}');`;
+
+  return <script dangerouslySetInnerHTML={{ __html: script }} />;
+}
+
+function GoogleTagManagerNoScript() {
+  const containerId = getGoogleTagManagerId();
+  if (!containerId) return null;
+
+  return (
+    <noscript>
+      <iframe
+        src={`https://www.googletagmanager.com/ns.html?id=${containerId}`}
+        height="0"
+        width="0"
+        style={{ display: "none", visibility: "hidden" }}
+        title="Google Tag Manager"
+      />
+    </noscript>
+  );
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -77,6 +111,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 const webAppSchema = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
+  "@id": `${SITE_URL}/#webapp`,
   name: "ArabiMalayalam",
   alternateName: [
     "Arabi Malayalam Keyboard",
@@ -84,7 +119,9 @@ const webAppSchema = {
     "അറബി-മലയാളം കീബോർഡ്",
     "اَرَبِ مَلَیَالَمْ",
   ],
-  url: "https://arabimalayalam.online/",
+  url: `${SITE_URL}/`,
+  image: SOCIAL_IMAGE_URL,
+  isPartOf: { "@id": `${SITE_URL}/#website` },
   applicationCategory: "UtilitiesApplication",
   operatingSystem: "All",
   browserRequirements: "Requires JavaScript. Requires HTML5.",
@@ -114,43 +151,16 @@ const webAppSchema = {
   ],
 };
 
-const faqSchema = {
+const webSiteSchema = {
   "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "What is Arabi-Malayalam (അറബി-മലയാളം)?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Arabi-Malayalam is a historical writing system developed in the Malabar region of Kerala, India. It adapts the Arabic alphabet with modified characters (such as ݧ for ഞ, ڞ for ങ, ڰ for ഗ, ڔ for റ, ڶ for ള, ڹ for ണ) to accurately represent all Malayalam phonetic sounds.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "How does the ArabiMalayalam keyboard transliteration work?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Simply type in English (Manglish like 'njan', 'sukhamanu', 'keralam'), Malayalam script ('ഞാൻ', 'കേരളം'), or Arabic. The intelligent transliterator provides real-time Arabi-Malayalam suggestions beneath your active cursor.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Can I install ArabiMalayalam as an app on my phone?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes, ArabiMalayalam is a full Progressive Web App (PWA). You can install it on iOS Safari (Share > Add to Home Screen) or Android Chrome with offline support.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Does ArabiMalayalam require an internet connection?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "No! Once loaded, ArabiMalayalam runs completely in your device browser. Transliteration and document auto-saving in IndexedDB work 100% offline.",
-      },
-    },
-  ],
+  "@type": "WebSite",
+  "@id": `${SITE_URL}/#website`,
+  url: `${SITE_URL}/`,
+  name: "ArabiMalayalam",
+  alternateName: "Arabi-Malayalam Keyboard",
+  description:
+    "A free online keyboard for converting Manglish, Malayalam, and Arabic into Arabi-Malayalam script.",
+  inLanguage: ["en-IN", "ml-IN", "ar"],
 };
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -164,11 +174,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { title: "ArabiMalayalam | Arabic, English & Malayalam to Arabi-Malayalam" },
+      { title: "Arabi-Malayalam Keyboard | Manglish, Malayalam & Arabic" },
       {
         name: "description",
         content:
-          "Instant intelligent Arabi-Malayalam keyboard and transliterator. Convert English (Manglish), Malayalam, and Arabic directly into authentic Arabi-Malayalam script with offline PWA support.",
+          "Free Arabi-Malayalam keyboard. Type Manglish, Malayalam, or Arabic and get instant Arabi-Malayalam script suggestions, with offline PWA support.",
       },
       {
         name: "keywords",
@@ -176,12 +186,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "arabi malayalam, arabi malayalam keyboard, arabi-malayalam transliteration, manglish to arabi malayalam, malayalam to arabi malayalam, arabic to arabi malayalam, mappila malayalam, arabi malayalam fonts, pwa keyboard, cvsuhail, അറബി മലയാളം, اَرَبِ مَلَیَالَمْ",
       },
       { name: "author", content: "CvSuhail" },
-      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
-      { name: "googlebot", content: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" },
-      { name: "bingbot", content: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" },
+      {
+        name: "robots",
+        content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+      },
+      {
+        name: "googlebot",
+        content: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      },
+      {
+        name: "bingbot",
+        content: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      },
       { property: "og:site_name", content: "ArabiMalayalam" },
-      { property: "og:url", content: "https://arabimalayalam.online/" },
-      { property: "og:title", content: "ArabiMalayalam - Arabic, English & Malayalam to Arabi-Malayalam" },
+      { property: "og:url", content: `${SITE_URL}/` },
+      { property: "og:title", content: "Arabi-Malayalam Keyboard | Manglish, Malayalam & Arabic" },
       {
         property: "og:description",
         content:
@@ -191,27 +210,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:locale", content: "en_US" },
       { property: "og:locale:alternate", content: "ml_IN" },
       { property: "og:locale:alternate", content: "ar_SA" },
-      { property: "og:image", content: "/og-image.png" },
+      { property: "og:image", content: SOCIAL_IMAGE_URL },
+      { property: "og:image:secure_url", content: SOCIAL_IMAGE_URL },
+      { property: "og:image:type", content: "image/png" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: "ArabiMalayalam Keyboard & Editor" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@CvSuhail" },
       { name: "twitter:creator", content: "@CvSuhail" },
-      { name: "twitter:title", content: "ArabiMalayalam | Arabic, English & Malayalam to Arabi-Malayalam" },
+      { name: "twitter:title", content: "Arabi-Malayalam Keyboard | Manglish, Malayalam & Arabic" },
       {
         name: "twitter:description",
         content:
           "Easily convert Arabic, English, and Malayalam to Arabi-Malayalam script in real-time with offline PWA support.",
       },
-      { name: "twitter:image", content: "/og-image.png" },
+      { name: "twitter:image", content: SOCIAL_IMAGE_URL },
+      { name: "twitter:image:alt", content: "ArabiMalayalam Keyboard & Editor" },
     ],
     links: [
-      { rel: "canonical", href: "https://arabimalayalam.online/" },
-      { rel: "alternate", href: "https://arabimalayalam.online/", hrefLang: "x-default" },
-      { rel: "alternate", href: "https://arabimalayalam.online/", hrefLang: "en" },
-      { rel: "alternate", href: "https://arabimalayalam.online/", hrefLang: "ml" },
-      { rel: "alternate", href: "https://arabimalayalam.online/", hrefLang: "ar" },
+      { rel: "canonical", href: `${SITE_URL}/` },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -233,11 +251,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     scripts: [
       {
         type: "application/ld+json",
-        children: JSON.stringify(webAppSchema),
+        children: JSON.stringify(webSiteSchema),
       },
       {
         type: "application/ld+json",
-        children: JSON.stringify(faqSchema),
+        children: JSON.stringify(webAppSchema),
       },
     ],
   }),
@@ -249,11 +267,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en-IN">
       <head>
+        <GoogleTagManagerHead />
         <HeadContent />
       </head>
       <body>
+        <GoogleTagManagerNoScript />
         {children}
         <Scripts />
       </body>

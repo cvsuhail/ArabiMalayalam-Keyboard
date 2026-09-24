@@ -2,7 +2,7 @@
 
 > Intelligent, real-time Arabi-Malayalam transliterator, phonetic keyboard, and document editor. Works 100% offline as a Progressive Web App (PWA).
 
-- **Canonical URL**: https://arabimalayalam.online/
+- **Canonical URL**: https://arabi-malayalam.cvsuhail.online/
 - **Author & Developer**: CvSuhail (https://www.cvsuhail.online/)
 - **Repository**: Personal / Open Source
 
@@ -54,7 +54,7 @@ Arabi-Malayalam (അറബി-മലയാളം / اَرَبِ مَلَیَال
 ## Frequently Asked Questions (FAQ)
 
 ### How do I use ArabiMalayalam on a phone?
-Open https://arabimalayalam.online/ in Safari or Chrome. Tap "Install" or "Add to Home Screen" to install it as a standalone native app.
+Open https://arabi-malayalam.cvsuhail.online/ in Safari or Chrome. Tap "Install" or "Add to Home Screen" to install it as a standalone native app.
 
 ### Are my documents stored securely?
 Yes, documents are stored exclusively in your device's browser IndexedDB. No text is sent to cloud servers, ensuring 100% privacy.
