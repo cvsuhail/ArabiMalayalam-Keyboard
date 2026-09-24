@@ -8,6 +8,7 @@
   **Intelligent, real-time Arabi-Malayalam transliterator, phonetic keyboard & document editor.**
 
   [![PWA Ready](https://img.shields.io/badge/PWA-Ready-137333?style=for-the-badge&logo=pwa&logoColor=white)](https://arabimalayalam.online/)
+  [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-suhailcv-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/suhailcv)
   [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
   [![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
   [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -198,6 +199,7 @@ Designed and built with ❤️ by **CvSuhail**.
 
 - **Portfolio**: [cvsuhail.online](https://www.cvsuhail.online/)
 - **Contact**: [+91 95627 70397](https://wa.me/919562770397)
+- **Support**: [![Buy me a Kattan Chai](https://img.shields.io/badge/Buy%20me%20a%20Kattan%20Chai-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/suhailcv) — [buymeacoffee.com/suhailcv](https://buymeacoffee.com/suhailcv)
 
 ---
 

@@ -20,6 +20,7 @@ import {
   Menu,
   MessageCircle,
 } from "lucide-react";
+import { BuyMeACoffeeButton, BuyMeACoffeeIcon } from "../components/BuyMeACoffee";
 import { toast } from "sonner";
 import {
   getTransliterationCandidates,
@@ -565,17 +566,18 @@ function ArabiMalayalamEditor() {
         </div>
 
         {/* Bottom of Mobile Drawer */}
-        <div className="p-4 border-t border-[#f1f3f4] dark:border-[#2d3135] flex flex-col gap-3">
+        <div className="p-4 border-t border-[#f1f3f4] dark:border-[#2d3135] flex flex-col gap-2.5">
+          <BuyMeACoffeeButton variant="mobile" />
           <button
             onClick={() => {
               setShowFeedbackModal(true);
               setIsMobileMenuOpen(false);
             }}
-            className="w-full py-2 px-3 text-xs font-bold text-[#3c4043] dark:text-[#e8eaed] bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-full hover:bg-[#f8f9fa] transition-colors cursor-pointer text-center"
+            className="w-full py-2 px-3 text-xs font-bold text-[#3c4043] dark:text-[#e8eaed] bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-xl hover:bg-[#f8f9fa] dark:hover:bg-[#2d3135] transition-colors cursor-pointer text-center"
           >
             Tell us your feedback
           </button>
-          <div className="text-center text-xs font-bold text-[#80868b] dark:text-[#9aa0a6]">
+          <div className="text-center text-xs font-bold text-[#80868b] dark:text-[#9aa0a6] pt-1">
             Build with ❤️ by{" "}
             <a
               href="https://www.cvsuhail.online/"
@@ -651,13 +653,14 @@ function ArabiMalayalamEditor() {
         </div>
 
         {/* Bottom of Sidebar */}
-        <div className="p-4 border-t border-[#f1f3f4] dark:border-[#2d3135] flex flex-col gap-3">
+        <div className="p-4 border-t border-[#f1f3f4] dark:border-[#2d3135] flex flex-col gap-2.5">
           <p className="text-xs font-bold leading-tight text-[#80868b] dark:text-[#9aa0a6]">
             Your files are stored only in this browser
           </p>
+          <BuyMeACoffeeButton variant="sidebar" />
           <button
             onClick={() => setShowFeedbackModal(true)}
-            className="w-full py-2 px-3 text-sm font-bold text-[#3c4043] dark:text-[#e8eaed] bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-full hover:bg-[#f8f9fa] dark:hover:bg-[#2d3135] transition-colors cursor-pointer text-center"
+            className="w-full py-2 px-3 text-sm font-bold text-[#3c4043] dark:text-[#e8eaed] bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-xl hover:bg-[#f8f9fa] dark:hover:bg-[#2d3135] transition-colors cursor-pointer text-center"
           >
             Tell us your feedback
           </button>
@@ -1119,18 +1122,20 @@ function ArabiMalayalamEditor() {
       )}
 
       {/* BOTTOM RIGHT ATTRIBUTION (Hidden on mobile to avoid overlapping dock; visible in mobile menu) */}
-      <div className="hidden sm:flex fixed bottom-4 right-4 z-40 bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#dadce0] dark:border-[#3c4043] shadow-md text-xs font-bold text-[#5f6368] dark:text-[#9aa0a6] select-none items-center gap-1.5 transition-transform hover:scale-105">
-        <span>Build with</span>
-        <span className="text-red-500 text-sm">❤️</span>
-        <span>by</span>
-        <a
-          href="https://www.cvsuhail.online/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#137333] dark:text-[#a3e635] hover:underline font-extrabold cursor-pointer"
-        >
-          CvSuhail
-        </a>
+      <div className="hidden sm:flex fixed bottom-4 right-4 z-40 items-center gap-2 select-none">
+        <div className="bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#dadce0] dark:border-[#3c4043] shadow-md text-xs font-bold text-[#5f6368] dark:text-[#9aa0a6] flex items-center gap-1.5 transition-transform hover:scale-105">
+          <span>Build with</span>
+          <span className="text-red-500 text-sm">❤️</span>
+          <span>by</span>
+          <a
+            href="https://www.cvsuhail.online/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#137333] dark:text-[#a3e635] hover:underline font-extrabold cursor-pointer"
+          >
+            CvSuhail
+          </a>
+        </div>
       </div>
     </div>
   );
