@@ -199,7 +199,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
       },
       { property: "og:site_name", content: "ArabiMalayalam" },
-      { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:title", content: "Arabi-Malayalam Keyboard | Manglish, Malayalam & Arabic" },
       {
         property: "og:description",
@@ -229,13 +228,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:image:alt", content: "ArabiMalayalam Keyboard & Editor" },
     ],
     links: [
-      { rel: "canonical", href: `${SITE_URL}/` },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Aref+Ruqaa:wght@400;700&family=Cookie&family=Harmattan:wght@400;700&family=Inter:wght@400;500;600;700&family=Lateef:wght@400;600;700&family=Lato:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Reem+Kufi:wght@400;500;600;700&family=Scheherazade+New:wght@400;700&display=swap",
+        rel: "alternate",
+        type: "text/markdown",
+        href: `${SITE_URL}/arabi-malayalam-guide.md`,
       },
+      { rel: "describedby", href: `${SITE_URL}/llms.txt` },
       {
         rel: "stylesheet",
         href: appCss,

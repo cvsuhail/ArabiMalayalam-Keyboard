@@ -6,6 +6,14 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
+
+interface WindowWithLegacyMsStream extends Window {
+  MSStream?: unknown;
+}
+
 export function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -15,9 +23,10 @@ export function PwaInstallPrompt() {
   useEffect(() => {
     // Check if already installed / running in standalone mode
     const checkStandalone = () => {
+      const navigatorWithStandalone = window.navigator as NavigatorWithStandalone;
       const isStandaloneMode =
         window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as any).standalone === true ||
+        navigatorWithStandalone.standalone === true ||
         document.referrer.includes("android-app://");
       setIsStandalone(isStandaloneMode);
       return isStandaloneMode;
@@ -27,7 +36,8 @@ export function PwaInstallPrompt() {
 
     // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(userAgent) && !(window as any).MSStream;
+    const legacyWindow = window as WindowWithLegacyMsStream;
+    const isIosDevice = /iphone|ipad|ipod/.test(userAgent) && !legacyWindow.MSStream;
     setIsIos(isIosDevice);
 
     // Check if dismissed recently (cooldown of 2 days)
@@ -84,7 +94,12 @@ export function PwaInstallPrompt() {
       />
 
       {/* Mobile Native Bottom Sheet */}
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#1e1e1e] border-t border-x border-[#dadce0] dark:border-[#3c4043] rounded-t-[28px] shadow-[0_-8px_30px_rgba(0,0,0,0.18)] p-5 sm:p-6 pb-8 pointer-events-auto animate-in slide-in-from-bottom duration-300 flex flex-col gap-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="install-app-title"
+        className="relative w-full max-w-lg bg-white dark:bg-[#1e1e1e] border-t border-x border-[#dadce0] dark:border-[#3c4043] rounded-t-[28px] shadow-[0_-8px_30px_rgba(0,0,0,0.18)] p-5 sm:p-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] pointer-events-auto animate-in slide-in-from-bottom duration-300 flex flex-col gap-4"
+      >
         {/* Grab Handle Pill */}
         <div className="w-12 h-1.5 bg-[#dadce0] dark:bg-[#3c4043] rounded-full mx-auto -mt-1 cursor-grab" />
 
@@ -106,9 +121,12 @@ export function PwaInstallPrompt() {
           />
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
-              <h3 className="font-extrabold text-xl text-[#202124] dark:text-[#e8eaed] leading-snug">
+              <h2
+                id="install-app-title"
+                className="font-extrabold text-xl text-[#202124] dark:text-[#e8eaed] leading-snug"
+              >
                 ArabiMalayalam
-              </h3>
+              </h2>
               <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#dcefe3] dark:bg-[#1b3d2b] text-[#137333] dark:text-[#a3e635]">
                 App
               </span>
@@ -122,17 +140,30 @@ export function PwaInstallPrompt() {
         {/* Feature Highlights Grid */}
         <div className="grid grid-cols-3 gap-2 py-2">
           <div className="flex flex-col items-center text-center p-2.5 rounded-xl bg-[#f8f9fa] dark:bg-[#25282a] border border-[#f1f3f4] dark:border-[#2d3135]">
-            <Sparkles className="w-5 h-5 text-[#137333] dark:text-[#a3e635] mb-1" strokeWidth={2.5} />
-            <span className="text-[11px] font-bold text-[#202124] dark:text-[#e8eaed]">Instant</span>
+            <Sparkles
+              className="w-5 h-5 text-[#137333] dark:text-[#a3e635] mb-1"
+              strokeWidth={2.5}
+            />
+            <span className="text-[11px] font-bold text-[#202124] dark:text-[#e8eaed]">
+              Instant
+            </span>
             <span className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6]">Real-time Typing</span>
           </div>
           <div className="flex flex-col items-center text-center p-2.5 rounded-xl bg-[#f8f9fa] dark:bg-[#25282a] border border-[#f1f3f4] dark:border-[#2d3135]">
-            <WifiOff className="w-5 h-5 text-[#137333] dark:text-[#a3e635] mb-1" strokeWidth={2.5} />
-            <span className="text-[11px] font-bold text-[#202124] dark:text-[#e8eaed]">Offline</span>
+            <WifiOff
+              className="w-5 h-5 text-[#137333] dark:text-[#a3e635] mb-1"
+              strokeWidth={2.5}
+            />
+            <span className="text-[11px] font-bold text-[#202124] dark:text-[#e8eaed]">
+              Offline
+            </span>
             <span className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6]">Works Anywhere</span>
           </div>
           <div className="flex flex-col items-center text-center p-2.5 rounded-xl bg-[#f8f9fa] dark:bg-[#25282a] border border-[#f1f3f4] dark:border-[#2d3135]">
-            <Smartphone className="w-5 h-5 text-[#137333] dark:text-[#a3e635] mb-1" strokeWidth={2.5} />
+            <Smartphone
+              className="w-5 h-5 text-[#137333] dark:text-[#a3e635] mb-1"
+              strokeWidth={2.5}
+            />
             <span className="text-[11px] font-bold text-[#202124] dark:text-[#e8eaed]">Native</span>
             <span className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6]">No Browser Bars</span>
           </div>
@@ -146,10 +177,18 @@ export function PwaInstallPrompt() {
             </span>
             <ol className="list-decimal list-inside flex flex-col gap-1 text-[13px] text-[#202124] dark:text-[#e8eaed]">
               <li>
-                Tap the <span className="font-bold inline-flex items-center gap-1"><Share className="w-3.5 h-3.5 inline" /> Share</span> button at the bottom of Safari.
+                Tap the{" "}
+                <span className="font-bold inline-flex items-center gap-1">
+                  <Share className="w-3.5 h-3.5 inline" /> Share
+                </span>{" "}
+                button at the bottom of Safari.
               </li>
               <li>
-                Scroll down and tap <span className="font-bold inline-flex items-center gap-1"><PlusSquare className="w-3.5 h-3.5 inline" /> Add to Home Screen</span>.
+                Scroll down and tap{" "}
+                <span className="font-bold inline-flex items-center gap-1">
+                  <PlusSquare className="w-3.5 h-3.5 inline" /> Add to Home Screen
+                </span>
+                .
               </li>
             </ol>
           </div>

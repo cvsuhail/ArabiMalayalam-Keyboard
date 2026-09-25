@@ -1,63 +1,26 @@
-# ArabiMalayalam (അറബി-മലയാളം)
+# ArabiMalayalam
 
-> Intelligent, real-time Arabi-Malayalam transliterator, phonetic keyboard, and document editor. Works 100% offline as a Progressive Web App (PWA).
+> ArabiMalayalam is a free, privacy-first online keyboard and transliterator for writing Malayalam in Arabi-Malayalam script. It accepts Manglish, Malayalam Unicode, and Arabic input, supports full sentences and paragraphs, and works as an installable offline Progressive Web App.
 
-- **Canonical URL**: https://arabi-malayalam.cvsuhail.online/
-- **Author & Developer**: CvSuhail (https://www.cvsuhail.online/)
-- **Repository**: Personal / Open Source
+Arabi-Malayalam (അറബി-മലയാളം / اَرَبِ مَلَیَالَمْ) is an adapted Arabic writing system used for Malayalam, especially in the Mappila literary tradition of Kerala's Malabar region. The keyboard provides ranked suggestions rather than semantic autocomplete. User documents and learned selections stay in browser storage unless an explicitly configured transliteration provider is used.
 
-## What is Arabi-Malayalam?
+## Use the keyboard
 
-Arabi-Malayalam (അറബി-മലയാളം / اَرَبِ مَلَیَالَمْ) is a centuries-old writing system developed in the Malabar region of Kerala, India, primarily by Mappila Muslims. It adapts the traditional Arabic abjad to accurately represent Dravidian Malayalam phonology by introducing modified Arabic glyphs for unique Malayalam consonants and vowel diacritics.
+- [Open the Arabi-Malayalam keyboard](https://arabi-malayalam.cvsuhail.online/): Type or paste Manglish, Malayalam, or Arabic and receive Arabi-Malayalam suggestions.
+- [How to type Arabi-Malayalam](https://arabi-malayalam.cvsuhail.online/how-to-type-arabi-malayalam): Step-by-step instructions, common Manglish examples, paragraph paste, and mobile installation.
+- [What is Arabi-Malayalam?](https://arabi-malayalam.cvsuhail.online/about-arabi-malayalam): Concise background, representative letters, and an explanation of the script.
 
-### Arabi-Malayalam Distinct Phonetic Letters
+## Machine-readable resources
 
-| Malayalam | Arabic-Malayalam Glyph | Unicode | Description |
-|-----------|------------------------|---------|-------------|
-| ഞ (nja)   | ݧ                      | U+0767  | Arabic letter Noon with two dots above |
-| ങ (nga)   | ڞ                      | U+069E  | Arabic letter Sad with three dots above |
-| ഗ (ga)    | ڰ                      | U+06B0  | Arabic letter Gaf with ring |
-| റ (rra)   | ڔ                      | U+0694  | Arabic letter Reh with small V below |
-| ള (lla)   | ڶ                      | U+06F6  | Arabic letter Lam with small V |
-| ണ (Nna)   | ڹ                      | U+06B9  | Arabic letter Noon with retroflex dot |
-| ഴ (zha)   | ژ                      | U+0698  | Arabic letter Jeh (Zhe) |
-| ട (Tta)   | ٹ                      | U+0679  | Arabic letter Tteh |
-| ഡ (Dda)   | ڈ                      | U+0688  | Arabic letter Ddal |
-| പ (pa)    | پ                      | U+067E  | Arabic letter Peh |
-| ച (cha)   | چ                      | U+0686  | Arabic letter Tcheh |
+- [Arabi-Malayalam guide in Markdown](https://arabi-malayalam.cvsuhail.online/arabi-malayalam-guide.md): Clean text describing the project, supported inputs, sample spellings, privacy, and limitations.
+- [XML sitemap](https://arabi-malayalam.cvsuhail.online/sitemap.xml): Canonical indexable pages.
+- [Web app manifest](https://arabi-malayalam.cvsuhail.online/manifest.webmanifest): Installable PWA metadata.
 
-### Vowel Diacritics & Short Vowel Extensions
+## Project
 
-- **Short 'e' (എ)**: Represented using the inverted kasra / small v below (`٘`, U+0658) or kasra.
-- **Short 'o' (ഒ)**: Represented using the inverted damma / small mark above (`ٗ`, U+0657) or damma.
-- **Long vowels**: Alif (`ا`) for 'aa', Yaa (`ي`) for 'ee', Waw (`و`) for 'oo'.
+- [Source repository](https://github.com/CvSuhail/arabiMalayalamKeyboard): Application source, transliteration rules, and contribution history.
+- [Creator: CvSuhail](https://www.cvsuhail.online/): Developer profile.
 
-## Key Features of ArabiMalayalam App
+## Optional
 
-1. **Multi-Input Real-Time Transliteration**:
-   - English / Manglish input (e.g., `njan`, `sukhamanu`, `vellam`, `keralam`, `onnu`).
-   - Malayalam Unicode input (e.g., `ഞാൻ`, `സുഖമാണ്`, `വെള്ളം`).
-   - Arabic standard script input.
-2. **Contextual Suggestion Dropdown**:
-   - Appears in real-time under the active word.
-   - Shows candidate orthographies with Arabic diacritics (harakat).
-   - Allows quick selection via number keys (1-6) or spacebar.
-3. **Typography & Classical Font Rendering**:
-   - Amiri, Noto Naskh Arabic, Scheherazade New, Lateef (Nastaliq), Aref Ruqaa, Noto Sans Arabic, Reem Kufi, Harmattan.
-4. **Progressive Web App (PWA)**:
-   - Installable on mobile devices (iOS Safari Add to Home Screen, Android Chrome Install).
-   - Full offline capabilities via Service Workers.
-   - Automatic local-first persistence via client IndexedDB.
-5. **Speech-to-Text Voice Typing**:
-   - Integrated Web Speech API for voice dictation.
-
-## Frequently Asked Questions (FAQ)
-
-### How do I use ArabiMalayalam on a phone?
-Open https://arabi-malayalam.cvsuhail.online/ in Safari or Chrome. Tap "Install" or "Add to Home Screen" to install it as a standalone native app.
-
-### Are my documents stored securely?
-Yes, documents are stored exclusively in your device's browser IndexedDB. No text is sent to cloud servers, ensuring 100% privacy.
-
-### Who created ArabiMalayalam?
-ArabiMalayalam was designed and engineered by **CvSuhail** (https://www.cvsuhail.online/). Feedback and suggestions can be sent via WhatsApp to +91 95627 70397.
+- [ArabiMalayalam social preview](https://arabi-malayalam.cvsuhail.online/og-image.png): 1200 by 630 project image.
