@@ -1,30 +1,44 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
+import { useEffect, useRef, useState } from "react";
+import { EditorContent, useEditor } from "@tiptap/react";
+import type { Editor, JSONContent } from "@tiptap/react";
+import type { Transaction } from "@tiptap/pm/state";
+import StarterKit from "@tiptap/starter-kit";
+import TextAlign from "@tiptap/extension-text-align";
+import Placeholder from "@tiptap/extension-placeholder";
+import Highlight from "@tiptap/extension-highlight";
+import { Color, FontSize, TextStyle } from "@tiptap/extension-text-style";
+import { Plus, Copy, Trash2, Check, X, Menu, MessageCircle } from "lucide-react";
+import { DocumentSidebar } from "../components/editor/DocumentSidebar";
+import { EditorDock } from "../components/editor/EditorDock";
+import { EditorToolbar } from "../components/editor/EditorToolbar";
 import {
-  Plus,
-  Copy,
-  Mic,
-  MicOff,
-  Undo2,
-  Redo2,
-  ChevronDown,
-  ChevronUp,
-  Trash2,
-  Download,
-  Check,
-  AlignCenter,
-  Bold,
-  Italic,
-  Underline,
-  X,
-  Menu,
-  MessageCircle,
-} from "lucide-react";
-import { BuyMeACoffeeButton, BuyMeACoffeeIcon } from "../components/BuyMeACoffee";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+import { Button } from "../components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import { LanguageToggle } from "../components/editor/LanguageToggle";
+import { SettingsMenu } from "../components/editor/SettingsMenu";
+import { useEditorSettings } from "../lib/settings";
+import { FONT_FAMILIES, loadFont, type FontChoice } from "../components/editor/fonts";
 import { toast } from "sonner";
 import type { SmartCandidate } from "../lib/transliteration/smartManglishLayer";
 import type { DocumentRecord } from "../lib/db/documents";
+import { deriveTitle, userTitle } from "../lib/db/documentView";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,76 +47,6 @@ export const Route = createFileRoute("/")({
   }),
   component: ArabiMalayalamEditor,
 });
-
-/** Available Font choices for Arabi-Malayalam and Malayalam preview */
-const FONT_FAMILIES = [
-  {
-    id: "default",
-    name: "Default (Amiri)",
-    font: "'Amiri', serif",
-    googleQuery: "Amiri:wght@400;700",
-  },
-  {
-    id: "noto-naskh",
-    name: "Noto Naskh Arabic",
-    font: "'Noto Naskh Arabic', serif",
-    googleQuery: "Noto+Naskh+Arabic:wght@400;500;600;700",
-  },
-  {
-    id: "scheherazade",
-    name: "Scheherazade New",
-    font: "'Scheherazade New', serif",
-    googleQuery: "Scheherazade+New:wght@400;700",
-  },
-  {
-    id: "lateef",
-    name: "Lateef (Nastaliq)",
-    font: "'Lateef', serif",
-    googleQuery: "Lateef:wght@400;600;700",
-  },
-  {
-    id: "aref-ruqaa",
-    name: "Aref Ruqaa",
-    // Has no ڿ ۼ ڊ ڗ ڹ ۻ ۺ ڔ; those letters come from Noto Naskh Arabic.
-    font: "'Aref Ruqaa', 'Noto Naskh Arabic', serif",
-    googleQuery: "Aref+Ruqaa:wght@400;700",
-    fallbackId: "noto-naskh",
-  },
-  {
-    id: "noto-sans-ar",
-    name: "Noto Sans Arabic",
-    font: "'Noto Sans Arabic', sans-serif",
-    googleQuery: "Noto+Sans+Arabic:wght@400;500;600;700",
-  },
-  {
-    id: "reem-kufi",
-    name: "Reem Kufi",
-    // Has no ڿ ۼ ڊ ڗ ڹ ۻ ۺ ڔ or the e/o marks; those come from Noto Naskh Arabic.
-    font: "'Reem Kufi', 'Noto Naskh Arabic', sans-serif",
-    googleQuery: "Reem+Kufi:wght@400;500;600;700",
-    fallbackId: "noto-naskh",
-  },
-  {
-    id: "harmattan",
-    name: "Harmattan",
-    font: "'Harmattan', sans-serif",
-    googleQuery: "Harmattan:wght@400;700",
-  },
-  {
-    id: "noto-malayalam",
-    name: "Noto Sans Malayalam",
-    font: "'Noto Sans Malayalam', sans-serif",
-    googleQuery: "Noto+Sans+Malayalam:wght@400;500;600;700",
-  },
-  {
-    id: "manjari",
-    name: "Manjari",
-    font: "'Manjari', sans-serif",
-    googleQuery: "Manjari:wght@400;700",
-  },
-];
-
-type FontChoice = (typeof FONT_FAMILIES)[number];
 
 interface SpeechRecognitionResultLike {
   isFinal: boolean;
@@ -159,109 +103,104 @@ const ARABIC_SCRIPT = /[؀-ۿݐ-ݿࢠ-ࣿ]/u;
 
 const loadDocumentStore = () => import("../lib/db/documents");
 
-function deriveTitle(plainText: string): string {
-  const cleaned = plainText.replace(/\s+/g, " ").trim();
-  if (!cleaned) return "Untitled document";
-  const words = cleaned.split(" ").slice(0, 5).join(" ");
-  return words.length > 60 ? `${words.slice(0, 60)}…` : words;
+const EDITOR_PLACEHOLDER = "Type Manglish (njan, evide, engane), Malayalam, or Arabic…";
+const ENGLISH_PLACEHOLDER = "Type in English…";
+const EMPTY_DOCUMENT_HTML = "<p></p>";
+const DEFAULT_FONT_SIZE = 26;
+const WORD_BEFORE_CARET = /[\p{L}\p{M}0-9']+$/u;
+/** Transaction meta marking edits the transliteration layer made itself. */
+const ARABI_EDIT = "arabiEdit";
+
+interface WordState {
+  text: string;
+  /** Document positions of the word the caret is at the end of. */
+  start: number;
+  end: number;
+}
+const NO_WORD: WordState = { text: "", start: 0, end: 0 };
+
+interface SuggestionState {
+  list: SmartCandidate[];
+  /** The word `list` was computed for; it can lag behind fast typing. */
+  word: string;
+  active: number;
+  pos: { top: number; left: number } | null;
+}
+const NO_SUGGESTIONS: SuggestionState = { list: [], word: "", active: 0, pos: null };
+
+interface EditorHandlers {
+  create: (editor: Editor) => void;
+  update: (editor: Editor, transaction: Transaction) => void;
+  selection: (editor: Editor, transaction: Transaction) => void;
+  keyDown: (event: KeyboardEvent) => boolean;
+  paste: (event: ClipboardEvent) => boolean;
 }
 
-function loadFont(font: FontChoice): void {
-  if (typeof document === "undefined") return;
-  // A font missing Arabi-Malayalam letters names the font they fall back to.
-  const fallback = FONT_FAMILIES.find((f) => f.id === font.fallbackId);
-  if (fallback) loadFont(fallback);
-  if (document.querySelector(`[data-app-font="${font.id}"]`)) return;
-  const stylesheet = document.createElement("link");
-  stylesheet.rel = "stylesheet";
-  stylesheet.href = `https://fonts.googleapis.com/css2?family=${font.googleQuery}&display=swap`;
-  stylesheet.dataset["appFont"] = font.id;
-  document.head.append(stylesheet);
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function appendHistory(previous: string[], next: string): string[] {
-  if (previous.at(-1) === next) return previous;
-  return [...previous.slice(-59), next];
+function plainTextToHtml(plainText: string): string {
+  if (!plainText) return EMPTY_DOCUMENT_HTML;
+  return plainText
+    .split("\n")
+    .map((line) => `<p>${escapeHtml(line)}</p>`)
+    .join("");
 }
 
-/** Precise Caret Offset Calculator for Textarea */
-function calculateCaretOffset(
-  element: HTMLTextAreaElement,
-  position: number,
-  direction: "rtl" | "ltr" = "ltr",
-  textAlign: "left" | "center" | "right" = "left",
-): { top: number; left: number; height: number } {
-  const div = document.createElement("div");
-  const style = window.getComputedStyle(element);
+/** Stored rich HTML, or paragraphs rebuilt from text for documents saved as one raw <p>. */
+function htmlForDocument(doc: DocumentRecord): string {
+  if (!doc.contentHtml || doc.contentHtml === `<p>${doc.plainText}</p>`) {
+    return plainTextToHtml(doc.plainText);
+  }
+  return doc.contentHtml;
+}
 
-  div.style.position = "absolute";
-  div.style.visibility = "hidden";
-  div.style.whiteSpace = "pre-wrap";
-  div.style.wordWrap = "break-word";
-  div.style.top = "0";
-  div.style.left = "-9999px";
-  div.style.width = `${element.clientWidth}px`;
-  div.style.fontFamily = style.fontFamily;
-  div.style.fontSize = style.fontSize;
-  div.style.lineHeight = style.lineHeight;
-  div.style.padding = style.padding;
-  div.style.border = style.border;
-  div.style.boxSizing = style.boxSizing;
-  div.style.direction = direction;
-  div.style.textAlign = textAlign;
+/** Where the suggestion popup goes: under the word, relative to the paper card. */
+function suggestionPosition(
+  editor: Editor,
+  paper: HTMLElement,
+  wordStart: number,
+): { top: number; left: number } {
+  const caret = editor.view.coordsAtPos(wordStart);
+  const paperRect = paper.getBoundingClientRect();
+  // The popup is w-56 (224px); keep it inside the paper.
+  const left = Math.max(16, Math.min(paperRect.width - 240, caret.left - paperRect.left));
+  return { top: caret.bottom - paperRect.top + 6, left };
+}
 
-  const textBefore = element.value.substring(0, position);
-  div.textContent = textBefore;
-
-  const span = document.createElement("span");
-  span.textContent = element.value.substring(position, position + 1) || "|";
-  div.appendChild(span);
-
-  document.body.appendChild(div);
-  const left = span.offsetLeft;
-  const top = span.offsetTop;
-  const height = span.offsetHeight || parseInt(style.fontSize, 10) * 1.5;
-  document.body.removeChild(div);
-
-  return { top, left, height };
+function BrandMark() {
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      <img src="/favicon.png" alt="" className="size-8 shrink-0 rounded-lg object-contain" />
+      <span className="truncate text-[15px] font-extrabold tracking-tight">ArabiMalayalam</span>
+    </div>
+  );
 }
 
 function ArabiMalayalamEditor() {
   const [currentDocId, setCurrentDocId] = useState<string>("");
-  const [title, setTitle] = useState<string>("Untitled Document");
+  // Only a name the user typed; empty shows the document's first words instead.
+  const [title, setTitle] = useState<string>("");
   const [text, setText] = useState<string>("");
-  const [currentWord, setCurrentWord] = useState<string>("");
-  const [wordRange, setWordRange] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
-  const [suggestions, setSuggestions] = useState<SmartCandidate[]>([]);
-  // The word `suggestions` were computed for; they can lag behind fast typing.
-  const [suggestionsWord, setSuggestionsWord] = useState<string>("");
-  const [activeSuggestionIdx, setActiveSuggestionIdx] = useState<number>(0);
-  const [suggestionPos, setSuggestionPos] = useState<{ top: number; left: number } | null>(null);
+  const [word, setWordState] = useState<WordState>(NO_WORD);
+  const [sug, setSugState] = useState<SuggestionState>(NO_SUGGESTIONS);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [settings, updateSettings] = useEditorSettings();
+  const [shortcutLabel, setShortcutLabel] = useState("Ctrl+L");
+  const isEnglish = settings.inputLanguage === "english";
 
-  // Formatting state: RTL by default for Arabi-Malayalam, LTR for Manglish
+  // Formatting state
   const [selectedFont, setSelectedFont] = useState<FontChoice>(FONT_FAMILIES[0]!);
-  const [fontSize, setFontSize] = useState<number>(26);
-  const [isBold, setIsBold] = useState<boolean>(false);
-  const [isItalic, setIsItalic] = useState<boolean>(false);
-  const [isUnderline, setIsUnderline] = useState<boolean>(false);
-  const [textAlign, setTextAlign] = useState<"left" | "center" | "right">("right");
 
   // Document list and auto-save
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [isSaved, setIsSaved] = useState<boolean>(true);
   const [isListening, setIsListening] = useState<boolean>(false);
-  const [showBottomMore, setShowBottomMore] = useState<boolean>(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState<boolean>(false);
   const [feedbackText, setFeedbackText] = useState<string>("");
-  const [showFontDropdown, setShowFontDropdown] = useState<boolean>(false);
   const [docToDelete, setDocToDelete] = useState<{ id: string; title: string } | null>(null);
 
-  // Undo / Redo history stack
-  const [historyStack, setHistoryStack] = useState<string[]>([]);
-  const [redoStack, setRedoStack] = useState<string[]>([]);
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerCloseButtonRef = useRef<HTMLButtonElement>(null);
@@ -269,19 +208,80 @@ function ArabiMalayalamEditor() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const previousMalayalamRef = useRef<string | undefined>(undefined);
-  // Latest text for long-lived callbacks (speech recognition) that outlive a render.
-  const textRef = useRef(text);
-  textRef.current = text;
+  const editorRef = useRef<Editor | null>(null);
+  const handlersRef = useRef<EditorHandlers | null>(null);
+  const lastDocSizeRef = useRef(0);
+  const focusOnReadyRef = useRef(false);
+  // HTML the editor starts from; a new editor is built whenever the document changes.
+  const initialContentRef = useRef<string>(EMPTY_DOCUMENT_HTML);
 
-  // Caret position to restore once a programmatic text change reaches the DOM.
-  // A layout effect runs before the next keystroke is handled, unlike a timer.
-  const pendingCaretRef = useRef<number | null>(null);
-  useLayoutEffect(() => {
-    const caret = pendingCaretRef.current;
-    if (caret === null || !textareaRef.current) return;
-    pendingCaretRef.current = null;
-    textareaRef.current.setSelectionRange(caret, caret);
-  }, [text]);
+  // The editor's callbacks outlive a render, so they read the live word and
+  // suggestions from refs that are written together with the state.
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const wordRef = useRef<WordState>(word);
+  const sugRef = useRef<SuggestionState>(sug);
+
+  const updateWord = (next: WordState) => {
+    wordRef.current = next;
+    setWordState(next);
+  };
+  const updateSuggestions = (patch: Partial<SuggestionState>) => {
+    sugRef.current = { ...sugRef.current, ...patch };
+    setSugState(sugRef.current);
+  };
+  const clearWord = () => {
+    if (wordRef.current.text) updateWord(NO_WORD);
+    if (sugRef.current.list.length > 0 || sugRef.current.pos) updateSuggestions(NO_SUGGESTIONS);
+  };
+
+  const editor = useEditor(
+    {
+      immediatelyRender: false,
+      shouldRerenderOnTransaction: true,
+      extensions: [
+        StarterKit.configure({
+          blockquote: false,
+          code: false,
+          codeBlock: false,
+          heading: false,
+          horizontalRule: false,
+          link: false,
+          strike: false,
+        }),
+        TextAlign.configure({ types: ["paragraph"] }),
+        TextStyle,
+        Color,
+        FontSize,
+        Highlight.configure({ multicolor: true }),
+        Placeholder.configure({
+          placeholder: () =>
+            settingsRef.current.inputLanguage === "english"
+              ? ENGLISH_PLACEHOLDER
+              : EDITOR_PLACEHOLDER,
+        }),
+      ],
+      content: initialContentRef.current,
+      editorProps: {
+        attributes: () => ({
+          dir: settingsRef.current.inputLanguage === "english" ? "ltr" : "rtl",
+          role: "textbox",
+          "aria-multiline": "true",
+          "aria-label": "Arabi-Malayalam transliteration editor",
+          spellcheck: "false",
+        }),
+        handleKeyDown: (_view, event) => handlersRef.current?.keyDown(event) ?? false,
+        handlePaste: (_view, event) => handlersRef.current?.paste(event) ?? false,
+      },
+      onCreate: ({ editor: created }) => handlersRef.current?.create(created),
+      onUpdate: ({ editor: updated, transaction }) =>
+        handlersRef.current?.update(updated, transaction),
+      onSelectionUpdate: ({ editor: moved, transaction }) =>
+        handlersRef.current?.selection(moved, transaction),
+    },
+    [currentDocId],
+  );
+  editorRef.current = editor;
 
   // Warm up the transliteration engine and word list before the first keystroke.
   useEffect(() => {
@@ -304,6 +304,15 @@ function ArabiMalayalamEditor() {
     }
   }, [isMobileMenuOpen]);
 
+  // Open a stored document: the editor is rebuilt from it (which also resets undo history).
+  const openDocument = (doc: DocumentRecord) => {
+    initialContentRef.current = htmlForDocument(doc);
+    previousMalayalamRef.current = undefined;
+    clearWord();
+    setTitle(userTitle(doc));
+    setCurrentDocId(doc.id);
+  };
+
   // Initialize from IndexedDB
   useEffect(() => {
     let mounted = true;
@@ -314,19 +323,12 @@ function ArabiMalayalamEditor() {
         if (!mounted) return;
         setDocuments(docs);
         if (docs.length > 0 && docs[0]) {
-          const first = docs[0];
-          setCurrentDocId(first.id);
-          setTitle(first.title || "Untitled Document");
-          setText(first.plainText || "");
-          setHistoryStack([first.plainText || ""]);
+          openDocument(docs[0]);
         } else {
           const newDoc = await createDocument("manglish");
           if (!mounted) return;
-          setCurrentDocId(newDoc.id);
-          setTitle("njan");
-          setText("");
           setDocuments([newDoc]);
-          setHistoryStack([""]);
+          openDocument(newDoc);
         }
       } catch (e) {
         console.error("IndexedDB load error:", e);
@@ -336,112 +338,123 @@ function ArabiMalayalamEditor() {
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Debounced auto-save
-  const triggerAutoSave = (newText: string, newTitle: string) => {
+  // Focus the editor once the one for a freshly created document exists.
+  useEffect(() => {
+    if (editor && focusOnReadyRef.current) {
+      focusOnReadyRef.current = false;
+      editor.commands.focus("end");
+    }
+  }, [editor]);
+
+  // A language switch changes the writing direction and drops any half-typed word.
+  useEffect(() => {
+    clearWord();
+    if (editor?.isInitialized) editor.view.dispatch(editor.state.tr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, settings.inputLanguage]);
+
+  useEffect(() => {
+    if (!settings.showSuggestions) updateSuggestions(NO_SUGGESTIONS);
+  }, [settings.showSuggestions]);
+
+  useEffect(() => {
+    setShortcutLabel(/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘L" : "Ctrl+L");
+  }, []);
+
+  // Cmd/Ctrl+L flips between Arabi-Malayalam and English.
+  useEffect(() => {
+    if (!settings.languageShortcut) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== "l")
+        return;
+      e.preventDefault();
+      const next = settingsRef.current.inputLanguage === "english" ? "arabi" : "english";
+      updateSettings({ inputLanguage: next });
+      toast(next === "english" ? "English" : "Arabi-Malayalam");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [settings.languageShortcut, updateSettings]);
+
+  // Tell assistive tech which suggestion is highlighted.
+  useEffect(() => {
+    if (!editor?.isInitialized) return;
+    const dom = editor.view.dom;
+    if (sug.list.length > 0) {
+      dom.setAttribute("aria-controls", "transliteration-suggestions");
+      dom.setAttribute("aria-activedescendant", `transliteration-suggestion-${sug.active}`);
+    } else {
+      dom.removeAttribute("aria-controls");
+      dom.removeAttribute("aria-activedescendant");
+    }
+  }, [editor, sug.list.length, sug.active]);
+
+  // Debounced auto-save of the open document.
+  const saveDocument = (ed: Editor, plain: string, titleOverride?: string) => {
     setIsSaved(false);
+    const docId = currentDocId;
+    const docTitle = titleOverride ?? title;
+    const contentHtml = ed.getHTML();
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
-      if (!currentDocId) return;
+      if (!docId) return;
       try {
         const { updateDocument, listDocuments } = await loadDocumentStore();
-        await updateDocument(currentDocId, {
-          plainText: newText,
-          contentHtml: `<p>${newText}</p>`,
-          title: newTitle || deriveTitle(newText) || "Untitled Document",
-        });
+        await updateDocument(docId, { plainText: plain, contentHtml, title: docTitle });
         setIsSaved(true);
-        const docs = await listDocuments();
-        setDocuments(docs);
+        setDocuments(await listDocuments());
       } catch (err) {
         console.error("Auto-save failed", err);
       }
     }, 500);
   };
 
-  // Generate transliteration candidates and position dropdown directly under the word
+  // Generate transliteration candidates and position the popup under the word
   useEffect(() => {
+    if (!word.text.trim() || !settings.showSuggestions || isEnglish) return;
     let cancelled = false;
 
-    if (!currentWord.trim()) {
-      setSuggestions([]);
-      setSuggestionPos(null);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const updateSuggestions = async () => {
+    const refreshSuggestions = async () => {
       try {
         const { getSmartTransliterationCandidates } = await loadSmartEngine();
         const previousMalayalam = previousMalayalamRef.current;
         const candidates = await getSmartTransliterationCandidates(
-          currentWord,
+          word.text,
           SUGGESTION_COUNT,
           previousMalayalam ? { previousMalayalam } : {},
         );
         if (cancelled) return;
-        setSuggestions(candidates);
-        setSuggestionsWord(currentWord);
-        setActiveSuggestionIdx(0);
-
-        // Compute pixel coordinates relative to the white paper canvas
-        if (textareaRef.current && paperRef.current) {
-          const isRtl = textAlign === "right";
-          const coords = calculateCaretOffset(
-            textareaRef.current,
-            wordRange.start,
-            isRtl ? "rtl" : "ltr",
-            textAlign,
-          );
-          const paperRect = paperRef.current.getBoundingClientRect();
-          const textareaRect = textareaRef.current.getBoundingClientRect();
-
-          // Position dropdown directly under the active word
-          const relTop = textareaRect.top - paperRect.top + coords.top + coords.height + 6;
-          let relLeft = textareaRect.left - paperRect.left + coords.left;
-
-          if (isRtl) {
-            // In RTL mode, align the dropdown to sit nicely beneath the right-aligned word
-            relLeft = relLeft - 196;
-          }
-
-          // Ensure dropdown (w-56 = 224px) doesn't overflow the paper boundary
-          const minLeft = 16;
-          const maxLeft = Math.max(16, paperRect.width - 240);
-          relLeft = Math.max(minLeft, Math.min(maxLeft, relLeft));
-
-          setSuggestionPos({ top: relTop, left: relLeft });
-        }
+        const ed = editorRef.current;
+        const paper = paperRef.current;
+        const pos = ed?.isInitialized && paper ? suggestionPosition(ed, paper, word.start) : null;
+        updateSuggestions({ list: candidates, word: word.text, active: 0, pos });
       } catch (err) {
-        if (!cancelled) {
-          console.error("Transliteration / caret calculation error:", err);
-        }
+        if (!cancelled) console.error("Transliteration / caret calculation error:", err);
       }
     };
 
-    void updateSuggestions();
+    void refreshSuggestions();
     return () => {
       cancelled = true;
     };
-  }, [currentWord, wordRange.start, textAlign]);
+  }, [word.text, word.start, settings.showSuggestions, isEnglish]);
 
   // Keep the highlighted suggestion visible inside the scrollable list. Only the
   // list scrolls; scrollIntoView would also move the page on phones.
   const suggestionListRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const list = suggestionListRef.current;
-    const option = list?.querySelector<HTMLElement>(
-      `#transliteration-suggestion-${activeSuggestionIdx}`,
-    );
+    const option = list?.querySelector<HTMLElement>(`#transliteration-suggestion-${sug.active}`);
     if (!list || !option) return;
     if (option.offsetTop < list.scrollTop) {
       list.scrollTop = option.offsetTop;
     } else if (option.offsetTop + option.offsetHeight > list.scrollTop + list.clientHeight) {
       list.scrollTop = option.offsetTop + option.offsetHeight - list.clientHeight;
     }
-  }, [activeSuggestionIdx, suggestions]);
+  }, [sug.active, sug.list]);
 
   const rememberChoice = (typedWord: string, suggestion: SmartCandidate) => {
     if (!suggestion.malayalam || suggestion.source === "typed") return;
@@ -452,235 +465,199 @@ function ArabiMalayalamEditor() {
     previousMalayalamRef.current = malayalam;
   };
 
-  // Insert chosen suggestion into text
+  // Insert chosen suggestion in place of the typed word
   const applySuggestion = (suggestion: SmartCandidate) => {
-    if (!textareaRef.current) return;
-    const el = textareaRef.current;
-    const before = text.slice(0, wordRange.start);
-    const after = text.slice(wordRange.end);
-    const replacement = suggestion.text + " ";
-    const updated = before + replacement + after;
-    const newPos = wordRange.start + replacement.length;
-
-    setHistoryStack((prev) => appendHistory(prev, updated));
-    setRedoStack([]);
-    rememberChoice(currentWord, suggestion);
-
-    pendingCaretRef.current = newPos;
-    setText(updated);
-    setCurrentWord("");
-    setSuggestions([]);
-    setSuggestionPos(null);
-    triggerAutoSave(updated, title);
-    el.focus();
+    const ed = editorRef.current;
+    const typed = wordRef.current;
+    if (!ed?.isInitialized || !typed.text) return;
+    const tr = ed.state.tr
+      .insertText(`${suggestion.text} `, typed.start, typed.end)
+      .setMeta(ARABI_EDIT, true);
+    ed.view.dispatch(tr);
+    rememberChoice(typed.text, suggestion);
+    ed.view.focus();
   };
 
   // Keyboard navigation for suggestions dropdown
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Suggestions may still belong to an earlier prefix of the word (e.g. "nja"
-    // while "njan" is typed). Then committing keys fall through and the change
-    // handler commits the current word with fresh candidates.
-    const fresh = suggestions.length > 0 && suggestionsWord === currentWord;
-
-    if (suggestions.length > 0) {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setActiveSuggestionIdx((prev) => (prev + 1) % suggestions.length);
-        return;
-      }
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setActiveSuggestionIdx((prev) => (prev - 1 + suggestions.length) % suggestions.length);
-        return;
-      }
-      if (e.key === "Enter" && fresh) {
-        e.preventDefault();
-        const target = suggestions[activeSuggestionIdx];
-        if (target) applySuggestion(target);
-        return;
-      }
-      if (e.key === " " && fresh) {
-        e.preventDefault();
-        const target = suggestions[activeSuggestionIdx] || suggestions[0];
-        if (target) applySuggestion(target);
-        return;
-      }
-      const shortcut = SHORTCUT_KEYS.indexOf(e.key);
-      if (fresh && shortcut >= 0 && suggestions[shortcut]) {
-        e.preventDefault();
-        applySuggestion(suggestions[shortcut]!);
-        return;
-      }
-      if (e.key === "Escape") {
-        setSuggestions([]);
-        setSuggestionPos(null);
-        return;
-      }
+  const handleEditorKeyDown = (e: KeyboardEvent): boolean => {
+    if (e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return false;
+    if (!settingsRef.current.showSuggestions || settingsRef.current.inputLanguage === "english") {
+      return false;
     }
+    const { list, word: suggestedFor, active } = sugRef.current;
+    if (list.length === 0) return false;
+    // Suggestions may still belong to an earlier prefix of the word (e.g. "nja"
+    // while "njan" is typed). Then committing keys fall through and the update
+    // handler commits the current word with fresh candidates.
+    const fresh = suggestedFor === wordRef.current.text;
+
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const step = e.key === "ArrowDown" ? 1 : -1;
+      updateSuggestions({ active: (active + step + list.length) % list.length });
+      return true;
+    }
+    if ((e.key === "Enter" || e.key === " ") && fresh) {
+      const target = list[active] ?? list[0];
+      if (!target) return false;
+      e.preventDefault();
+      applySuggestion(target);
+      return true;
+    }
+    const shortcut = SHORTCUT_KEYS.indexOf(e.key);
+    if (fresh && shortcut >= 0 && list[shortcut]) {
+      e.preventDefault();
+      applySuggestion(list[shortcut]!);
+      return true;
+    }
+    if (e.key === "Escape") {
+      updateSuggestions({ list: [], pos: null });
+    }
+    return false;
   };
 
   /**
-   * Replace `word` (still sitting at `start`, followed by the separator the
+   * Replace `typed` (still sitting at `start`, followed by the separator the
    * user just typed) with its best suggestion. Mobile keyboards don't report
-   * Space or punctuation through keydown, so this runs from the change event.
+   * Space or punctuation through keydown, so this runs from the update event.
    */
-  const commitWordBeforeSeparator = async (word: string, start: number) => {
-    const ready = suggestionsWord === word && suggestions.length > 0;
-    let choice = ready ? (suggestions[activeSuggestionIdx] ?? suggestions[0]) : undefined;
+  const commitWordBeforeSeparator = async (typed: string, start: number) => {
+    const s = sugRef.current;
+    const ready = s.word === typed && s.list.length > 0;
+    let choice = ready ? (s.list[s.active] ?? s.list[0]) : undefined;
     if (!choice) {
       const { getSmartTransliterationCandidates } = await loadSmartEngine();
       const previousMalayalam = previousMalayalamRef.current;
       [choice] = await getSmartTransliterationCandidates(
-        word,
+        typed,
         SUGGESTION_COUNT,
         previousMalayalam ? { previousMalayalam } : {},
       );
     }
 
-    const el = textareaRef.current;
-    if (!el || !choice || choice.text === word) return;
-    const value = el.value;
-    if (value.slice(start, start + word.length) !== word) return; // edited meanwhile
-
-    const updated = value.slice(0, start) + choice.text + value.slice(start + word.length);
-    const caret = el.selectionStart;
-    const delta = choice.text.length - word.length;
-    pendingCaretRef.current = caret >= start + word.length ? caret + delta : caret;
-
-    // Render now, before another keystroke can read the old DOM value.
-    flushSync(() => {
-      setHistoryStack((prev) => appendHistory(prev, updated));
-      setRedoStack([]);
-      setText(updated);
-    });
-    triggerAutoSave(updated, title);
-    rememberChoice(word, choice);
+    const ed = editorRef.current;
+    if (!ed?.isInitialized || !choice || choice.text === typed) return;
+    const end = start + typed.length;
+    if (end > ed.state.doc.content.size || ed.state.doc.textBetween(start, end) !== typed) return; // edited meanwhile
+    ed.view.dispatch(ed.state.tr.insertText(choice.text, start, end).setMeta(ARABI_EDIT, true));
+    rememberChoice(typed, choice);
   };
 
-  // Handle typing & isolate active word before caret
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    const pos = e.target.selectionStart;
+  /** The Latin word being typed right before the caret, if any. */
+  const analyseWord = (ed: Editor) => {
+    const { selection } = ed.state;
+    if (!selection.empty) return clearWord();
+    const { $from } = selection;
+    const before = $from.parent.textBetween(0, $from.parentOffset, undefined, "￼");
+    const match = before.match(WORD_BEFORE_CARET);
+    if (!match) return clearWord();
+    updateWord({ text: match[0], start: $from.pos - match[0].length, end: $from.pos });
+  };
 
-    setHistoryStack((prev) => appendHistory(prev, val));
-    setRedoStack([]);
+  const handleEditorUpdate = (ed: Editor, transaction: Transaction) => {
+    const plain = ed.getText({ blockSeparator: "\n" });
+    setText(plain);
+    saveDocument(ed, plain);
 
-    setText(val);
-    triggerAutoSave(val, title);
+    const size = ed.state.doc.content.size;
+    const grewByOne = size - lastDocSizeRef.current === 1;
+    lastDocSizeRef.current = size;
+
+    // English types Latin letters as they are.
+    if (settingsRef.current.inputLanguage === "english") {
+      clearWord();
+      return;
+    }
 
     // A single separator typed straight after the active word commits it.
-    const typedChar = val.length === text.length + 1 ? val[pos - 1] : undefined;
+    const typed = wordRef.current;
+    const { $from } = ed.state.selection;
+    const before = $from.parent.textBetween(0, $from.parentOffset, undefined, "￼");
+    const separator = before.slice(-1);
     if (
-      typedChar &&
-      COMMIT_CHARACTER.test(typedChar) &&
-      currentWord &&
-      wordRange.start === pos - 1 - currentWord.length &&
-      val.slice(wordRange.start, pos - 1) === currentWord &&
-      !ARABIC_SCRIPT.test(currentWord)
+      !transaction.getMeta(ARABI_EDIT) &&
+      grewByOne &&
+      ed.state.selection.empty &&
+      typed.text &&
+      COMMIT_CHARACTER.test(separator) &&
+      $from.pos - 1 === typed.end &&
+      before.endsWith(typed.text + separator) &&
+      !ARABIC_SCRIPT.test(typed.text)
     ) {
-      void commitWordBeforeSeparator(currentWord, wordRange.start);
+      void commitWordBeforeSeparator(typed.text, typed.start);
     }
 
-    const leftText = val.slice(0, pos);
-    const match = leftText.match(/[\p{L}\p{M}0-9']+$/u);
-    if (match) {
-      const start = pos - match[0].length;
-      setCurrentWord(match[0]);
-      setWordRange({ start, end: pos });
-    } else {
-      setCurrentWord("");
-      setSuggestions([]);
-      setSuggestionPos(null);
+    analyseWord(ed);
+  };
+
+  // Moving the caret away from the word closes its suggestions.
+  const handleEditorSelection = (ed: Editor, transaction: Transaction) => {
+    if (transaction.docChanged) return;
+    const typed = wordRef.current;
+    if (typed.text && (!ed.state.selection.empty || ed.state.selection.from !== typed.end)) {
+      clearWord();
     }
+  };
+
+  /** Insert plain text (blank lines become empty paragraphs) at `range`, else at the caret. */
+  const insertPlainText = (ed: Editor, value: string, range?: { from: number; to: number }) => {
+    const lines = value.split(/\r?\n/);
+    const content: JSONContent[] =
+      lines.length === 1
+        ? [{ type: "text", text: value }]
+        : lines.map((line) => ({
+            type: "paragraph",
+            ...(line ? { content: [{ type: "text", text: line }] } : {}),
+          }));
+    if (!value) return;
+    const target = range ?? { from: ed.state.selection.from, to: ed.state.selection.to };
+    ed.chain().focus().insertContentAt(target, content).run();
+    clearWord();
   };
 
   // Convert pasted Malayalam or Manglish, including complete sentences and paragraphs.
-  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const pastedText = e.clipboardData.getData("text/plain");
-    if (!pastedText) return;
-
+  const handleEditorPaste = (e: ClipboardEvent): boolean => {
+    const pastedText = e.clipboardData?.getData("text/plain");
+    const ed = editorRef.current;
+    if (!pastedText || !ed?.isInitialized) return false;
     e.preventDefault();
 
-    const el = e.currentTarget;
-    const valueBeforeConversion = el.value;
-    const initialSelectionStart = el.selectionStart;
-    const initialSelectionEnd = el.selectionEnd;
-    const { transliterateSmartPastedText } = await loadSmartEngine();
-    const convertedText = await transliterateSmartPastedText(pastedText);
-    const valueUnchanged = el.value === valueBeforeConversion;
-    const selectionStart = valueUnchanged ? initialSelectionStart : el.selectionStart;
-    const selectionEnd = valueUnchanged ? initialSelectionEnd : el.selectionEnd;
-    const currentValue = el.value;
-    const updated =
-      currentValue.slice(0, selectionStart) + convertedText + currentValue.slice(selectionEnd);
-    const newCaretPosition = selectionStart + convertedText.length;
-
-    setHistoryStack((prev) => appendHistory(prev, updated));
-    setRedoStack([]);
-    setText(updated);
-    setCurrentWord("");
-    setSuggestions([]);
-    setSuggestionPos(null);
-    triggerAutoSave(updated, title);
-
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(newCaretPosition, newCaretPosition);
-    });
+    const docBefore = ed.state.doc;
+    const { from, to } = ed.state.selection;
+    void (async () => {
+      const { transliterateSmartPastedText } = await loadSmartEngine();
+      const convertedText = await transliterateSmartPastedText(pastedText);
+      if (ed.isDestroyed) return;
+      // Keep the selection the user pasted over unless they edited meanwhile.
+      insertPlainText(ed, convertedText, ed.state.doc === docBefore ? { from, to } : undefined);
+    })();
+    return true;
   };
 
-  // Undo / Redo
-  const handleUndo = () => {
-    if (historyStack.length > 1) {
-      const current = historyStack[historyStack.length - 1];
-      const previous = historyStack[historyStack.length - 2];
-      if (current !== undefined && previous !== undefined) {
-        setRedoStack((prev) => [...prev, current]);
-        setHistoryStack((prev) => prev.slice(0, -1));
-        setText(previous);
-        triggerAutoSave(previous, title);
-      }
-    }
-  };
-
-  const handleRedo = () => {
-    if (redoStack.length > 0) {
-      const next = redoStack[redoStack.length - 1];
-      if (next !== undefined) {
-        setRedoStack((prev) => prev.slice(0, -1));
-        setHistoryStack((prev) => appendHistory(prev, next));
-        setText(next);
-        triggerAutoSave(next, title);
-      }
-    }
+  handlersRef.current = {
+    create: (ed) => {
+      lastDocSizeRef.current = ed.state.doc.content.size;
+      setText(ed.getText({ blockSeparator: "\n" }));
+    },
+    update: handleEditorUpdate,
+    selection: handleEditorSelection,
+    keyDown: handleEditorKeyDown,
+    paste: handleEditorPaste,
   };
 
   // Create New File
   const handleNewFile = async () => {
     const { createDocument, listDocuments } = await loadDocumentStore();
     const newDoc = await createDocument("manglish");
-    setCurrentDocId(newDoc.id);
-    setTitle("Untitled");
-    setText("");
-    setHistoryStack([""]);
-    setRedoStack([]);
-    previousMalayalamRef.current = undefined;
-    const docs = await listDocuments();
-    setDocuments(docs);
+    focusOnReadyRef.current = true;
+    openDocument(newDoc);
+    setDocuments(await listDocuments());
     toast.success("Created new document");
-    if (textareaRef.current) textareaRef.current.focus();
   };
 
   // Select document from sidebar
   const handleSelectDoc = (doc: DocumentRecord) => {
-    setCurrentDocId(doc.id);
-    setTitle(doc.title || "Untitled Document");
-    setText(doc.plainText || "");
-    setHistoryStack([doc.plainText || ""]);
-    setRedoStack([]);
-    previousMalayalamRef.current = undefined;
-    setSuggestions([]);
-    setSuggestionPos(null);
+    if (doc.id !== currentDocId) openDocument(doc);
   };
 
   // Prompt custom modal to delete document
@@ -725,13 +702,64 @@ function ArabiMalayalamEditor() {
 
   // Copy document text
   const handleCopy = async () => {
-    if (!text) {
+    if (!text.trim()) {
       toast.error("Nothing to copy!");
       return;
     }
     await navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard!");
   };
+
+  // Copy with fonts, colours and alignment (pastes into Word, Docs and email)
+  const handleCopyStyled = async () => {
+    if (!editor?.isInitialized || !text.trim()) {
+      toast.error("Nothing to copy!");
+      return;
+    }
+    try {
+      const html = `<div dir="rtl" style="font-family:${selectedFont.font};font-size:${DEFAULT_FONT_SIZE}px">${editor.getHTML()}</div>`;
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        }),
+      ]);
+      toast.success("Copied with styles!");
+    } catch {
+      toast.error("Could not copy with styles in this browser.");
+    }
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(title || deriveTitle(text) || "document").replace(/\s+/g, "-")}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Downloaded document");
+  };
+
+  const handleRename = async (id: string, name: string) => {
+    const { renameDocument, listDocuments } = await loadDocumentStore();
+    await renameDocument(id, name);
+    if (id === currentDocId) setTitle(name);
+    setDocuments(await listDocuments());
+  };
+
+  const sidebar = (onNavigate?: () => void) => (
+    <DocumentSidebar
+      documents={documents}
+      currentDocId={currentDocId}
+      onSelect={handleSelectDoc}
+      onNew={handleNewFile}
+      onRename={handleRename}
+      onDelete={(id, name) => requestDeleteDoc(id, name)}
+      onFeedback={() => setShowFeedbackModal(true)}
+      {...(onNavigate ? { onNavigate } : {})}
+    />
+  );
 
   // Voice Typing
   const toggleVoiceTyping = () => {
@@ -772,13 +800,13 @@ function ArabiMalayalamEditor() {
           // Dictation may mix Malayalam and English words; convert both.
           const { transliterateSmartPastedText } = await loadSmartEngine();
           const converted = await transliterateSmartPastedText(transcript.trim());
-          // This callback outlives the render it was created in: read the live text.
-          const current = textRef.current;
-          const updated = (current ? current.trimEnd() + " " : "") + converted + " ";
-          setHistoryStack((prev) => appendHistory(prev, updated));
-          setRedoStack([]);
-          setText(updated);
-          triggerAutoSave(updated, title);
+          // This callback outlives the render it was created in: read the live editor.
+          const ed = editorRef.current;
+          if (!ed?.isInitialized) return;
+          ed.commands.focus("end");
+          const existing = ed.getText();
+          const gap = existing && !/\s$/.test(existing) ? " " : "";
+          insertPlainText(ed, `${gap}${converted} `);
         }
       };
 
@@ -796,7 +824,7 @@ function ArabiMalayalamEditor() {
   };
 
   return (
-    <div className="flex h-dvh min-h-svh w-full overflow-hidden overscroll-none bg-[#fafafa] dark:bg-[#121212] text-[#202124] dark:text-[#e8eaed] font-sans antialiased">
+    <div className="flex h-dvh min-h-svh w-full overflow-hidden overscroll-none bg-background font-sans text-foreground antialiased">
       {/* MOBILE DRAWER BACKDROP */}
       {isMobileMenuOpen && (
         <button
@@ -807,251 +835,54 @@ function ArabiMalayalamEditor() {
         />
       )}
 
-      {/* MOBILE SLIDE-OVER DRAWER (Native App Navigation) */}
+      {/* MOBILE SLIDE-OVER DRAWER */}
       <aside
         aria-label="Documents"
         aria-hidden={!isMobileMenuOpen}
         inert={!isMobileMenuOpen}
-        className={`md:hidden fixed inset-y-0 left-0 w-72 max-w-[84vw] bg-white dark:bg-[#181a1b] shadow-2xl z-50 flex flex-col justify-between transition-transform duration-300 ease-out select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ${
+        className={`no-print md:hidden fixed inset-y-0 left-0 z-50 flex w-72 max-w-[84vw] select-none flex-col bg-sidebar pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-2xl transition-transform duration-300 ease-out ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="p-4 flex flex-col gap-4 overflow-hidden">
-          {/* Header with App Icon, Name, and Close X button */}
-          <div className="flex items-center justify-between px-1 py-1">
-            <div className="flex items-center gap-2.5">
-              <img
-                src="/favicon.png"
-                alt="ArabiMalayalam Logo"
-                className="w-8 h-8 object-contain rounded-xl shadow-xs shrink-0"
-              />
-              <span className="font-extrabold text-lg tracking-tight text-[#202124] dark:text-[#e8eaed]">
-                ArabiMalayalam
-              </span>
-            </div>
-            <button
-              ref={drawerCloseButtonRef}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-[#5f6368] cursor-pointer"
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5" strokeWidth={2.5} />
-            </button>
-          </div>
-
-          {/* New Document Button */}
+        <div className="flex items-center justify-between p-4">
+          <BrandMark />
           <button
-            onClick={() => {
-              handleNewFile();
-              setIsMobileMenuOpen(false);
-            }}
-            className="flex min-h-11 items-center gap-2.5 px-3.5 text-sm font-bold text-[#137333] dark:text-[#a3e635] bg-[#eaf4ed] dark:bg-[#203328] hover:bg-[#dcefe3] rounded-xl transition-colors cursor-pointer w-full text-left shadow-xs"
+            ref={drawerCloseButtonRef}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-xl text-muted-foreground hover:bg-muted"
+            aria-label="Close menu"
           >
-            <Plus className="w-5 h-5" strokeWidth={2.75} />
-            <span>New Document</span>
+            <X className="w-5 h-5" strokeWidth={2.5} />
           </button>
-
-          {/* Documents List */}
-          <div className="mt-2 flex flex-col gap-1 overflow-y-auto max-h-[calc(100dvh-270px)] pr-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#5f6368] dark:text-[#9aa0a6] px-3 py-1">
-              Documents
-            </span>
-            {documents.length === 0 ? (
-              <div className="text-sm font-bold text-[#5f6368] px-3 py-2">No documents</div>
-            ) : (
-              documents.map((doc) => {
-                const isActive = doc.id === currentDocId;
-                const displayTitle = doc.title || deriveTitle(doc.plainText) || "Untitled";
-                return (
-                  <div
-                    key={doc.id}
-                    className={`group flex items-center rounded-xl text-sm font-bold transition-all ${
-                      isActive
-                        ? "bg-[#dcefe3] dark:bg-[#1b3d2b] text-[#1b4332] dark:text-[#a3e635]"
-                        : "text-[#3c4043] dark:text-[#bdc1c6] hover:bg-[#f1f3f4] dark:hover:bg-[#202124]"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleSelectDoc(doc);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="min-w-0 flex-1 truncate px-3 py-3 text-left font-bold"
-                      aria-current={isActive ? "page" : undefined}
-                    >
-                      {displayTitle}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => requestDeleteDoc(doc.id, displayTitle, e)}
-                      className="mr-1 flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500"
-                      aria-label={`Delete ${displayTitle}`}
-                    >
-                      <Trash2 className="w-4 h-4" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
         </div>
-
-        {/* Bottom of Mobile Drawer */}
-        <div className="p-4 border-t border-[#f1f3f4] dark:border-[#2d3135] flex flex-col gap-2.5">
-          <BuyMeACoffeeButton variant="mobile" />
-          <button
-            onClick={() => {
-              setShowFeedbackModal(true);
-              setIsMobileMenuOpen(false);
-            }}
-            className="min-h-11 w-full px-3 text-xs font-bold text-[#3c4043] dark:text-[#e8eaed] bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-xl hover:bg-[#f8f9fa] dark:hover:bg-[#2d3135] transition-colors cursor-pointer text-center"
-          >
-            Tell us your feedback
-          </button>
-          <div className="text-center text-xs font-bold text-[#5f6368] dark:text-[#9aa0a6] pt-1">
-            <Link
-              to="/about-arabi-malayalam"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="mb-2 block rounded-lg py-2 text-[#137333] dark:text-[#a3e635] hover:underline"
-            >
-              About Arabi-Malayalam
-            </Link>
-            Build with ❤️ by{" "}
-            <a
-              href="https://www.cvsuhail.online/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-extrabold text-[#137333] underline decoration-1 underline-offset-2 dark:text-[#a3e635]"
-            >
-              CvSuhail
-            </a>
-          </div>
-        </div>
+        <div className="min-h-0 flex-1">{sidebar(() => setIsMobileMenuOpen(false))}</div>
       </aside>
 
       {/* DESKTOP SIDEBAR */}
       <aside
         aria-label="Documents"
-        className="hidden md:flex w-64 border-r border-[#e8eaed] dark:border-[#2d3135] bg-white dark:bg-[#181a1b] flex-col justify-between shrink-0 select-none"
+        className="no-print hidden w-60 shrink-0 select-none flex-col border-r border-sidebar-border bg-sidebar md:flex"
       >
-        {/* Top: Logo & New File */}
-        <div className="p-4 flex flex-col gap-4">
-          {/* Logo with public/favicon.png */}
-          <div className="flex items-center gap-3 px-1 py-1">
-            <img
-              src="/favicon.png"
-              alt="ArabiMalayalam Logo"
-              className="w-10 h-10 object-contain rounded-xl shadow-xs shrink-0"
-            />
-            <div className="min-w-0">
-              <h1 className="font-extrabold text-lg tracking-tight text-[#202124] dark:text-[#e8eaed] m-0 leading-tight">
-                Arabi-Malayalam Keyboard
-              </h1>
-              <p className="mt-0.5 text-[10px] font-semibold text-[#5f6368] dark:text-[#9aa0a6]">
-                Manglish · Malayalam · Arabic
-              </p>
-            </div>
-          </div>
-
-          {/* New File Button */}
-          <button
-            onClick={handleNewFile}
-            className="flex items-center gap-2.5 px-3 py-2 text-base font-bold text-[#2d6a4f] dark:text-[#a3e635] hover:bg-[#eaf4ed] dark:hover:bg-[#203328] rounded-xl transition-colors cursor-pointer w-full text-left"
-          >
-            <Plus className="w-5 h-5 text-[#2d6a4f] dark:text-[#a3e635]" strokeWidth={2.75} />
-            <span>New File</span>
-          </button>
-
-          {/* Section: Today */}
-          <div className="mt-4 flex flex-col gap-1.5 overflow-y-auto max-h-[calc(100vh-270px)]">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#5f6368] dark:text-[#9aa0a6] px-3 py-1">
-              Today
-            </span>
-            {documents.length === 0 ? (
-              <div className="text-sm font-bold text-[#5f6368] px-3 py-2">No documents</div>
-            ) : (
-              documents.map((doc) => {
-                const isActive = doc.id === currentDocId;
-                const displayTitle = doc.title || deriveTitle(doc.plainText) || "Untitled";
-                return (
-                  <div
-                    key={doc.id}
-                    className={`group flex items-center rounded-xl text-base font-bold transition-all ${
-                      isActive
-                        ? "bg-[#dcefe3] dark:bg-[#1b3d2b] text-[#1b4332] dark:text-[#a3e635]"
-                        : "text-[#3c4043] dark:text-[#bdc1c6] hover:bg-[#f1f3f4] dark:hover:bg-[#202124]"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleSelectDoc(doc)}
-                      className="min-w-0 flex-1 truncate px-3 py-2.5 text-left font-bold"
-                      aria-current={isActive ? "page" : undefined}
-                    >
-                      {displayTitle}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => requestDeleteDoc(doc.id, displayTitle, e)}
-                      className="mr-1 flex min-h-9 min-w-9 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition-all hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100 group-focus-within:opacity-100"
-                      aria-label={`Delete ${displayTitle}`}
-                    >
-                      <Trash2 className="w-4 h-4" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
+        <div className="p-4">
+          <BrandMark />
         </div>
-
-        {/* Bottom of Sidebar */}
-        <div className="p-4 border-t border-[#f1f3f4] dark:border-[#2d3135] flex flex-col gap-2.5">
-          <Link
-            to="/about-arabi-malayalam"
-            className="rounded-lg py-1 text-center text-xs font-bold text-[#137333] dark:text-[#a3e635] hover:underline"
-          >
-            About & typing guide
-          </Link>
-          <p className="text-xs font-bold leading-tight text-[#5f6368] dark:text-[#9aa0a6]">
-            Your files are stored only in this browser
-          </p>
-          <BuyMeACoffeeButton variant="sidebar" />
-          <button
-            onClick={() => setShowFeedbackModal(true)}
-            className="w-full py-2 px-3 text-sm font-bold text-[#3c4043] dark:text-[#e8eaed] bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-xl hover:bg-[#f8f9fa] dark:hover:bg-[#2d3135] transition-colors cursor-pointer text-center"
-          >
-            Tell us your feedback
-          </button>
-          <p className="text-center text-[11px] font-semibold text-[#5f6368] dark:text-[#9aa0a6]">
-            Made with ❤️ by{" "}
-            <a
-              href="https://www.cvsuhail.online/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#137333] underline decoration-1 underline-offset-2 dark:text-[#a3e635]"
-            >
-              CvSuhail
-            </a>
-          </p>
-        </div>
+        <div className="min-h-0 flex-1">{sidebar()}</div>
       </aside>
 
       {/* MAIN CONTAINER */}
       <main
-        className="flex-1 flex flex-col overflow-hidden relative"
+        className="relative flex min-w-0 flex-1 flex-col overflow-hidden"
         id="keyboard-editor"
         aria-hidden={isMobileMenuOpen}
         inert={isMobileMenuOpen}
       >
         {/* TOP MOBILE APP BAR (Native App Header) */}
-        <header className="md:hidden flex min-h-14 items-center justify-between px-3 pb-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] bg-white/95 dark:bg-[#181a1b]/95 backdrop-blur-xl border-b border-[#dadce0] dark:border-[#2d3135] shrink-0 z-30 select-none shadow-xs">
+        <header className="no-print md:hidden flex min-h-14 items-center justify-between px-3 pb-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] bg-card/95 backdrop-blur-xl border-b border-border shrink-0 z-30 select-none shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
             <button
               ref={menuButtonRef}
               onClick={() => setIsMobileMenuOpen(true)}
-              className="-ml-1 flex min-h-11 min-w-11 items-center justify-center rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-[#202124] dark:text-[#e8eaed] cursor-pointer active:scale-95"
+              className="-ml-1 flex min-h-11 min-w-11 items-center justify-center rounded-xl hover:bg-muted text-foreground cursor-pointer active:scale-95"
               aria-label="Open menu"
             >
               <Menu className="w-6 h-6" strokeWidth={2.25} />
@@ -1067,9 +898,9 @@ function ArabiMalayalamEditor() {
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value);
-                  triggerAutoSave(text, e.target.value);
+                  if (editor?.isInitialized) saveDocument(editor, text, e.target.value);
                 }}
-                className="text-sm font-extrabold text-[#202124] dark:text-[#e8eaed] bg-transparent border-0 focus:outline-none focus:bg-black/5 dark:focus:bg-white/10 rounded px-1 truncate max-w-[140px] xs:max-w-[200px]"
+                className="text-sm font-extrabold text-foreground bg-transparent border-0 focus:outline-none focus:bg-muted rounded px-1 truncate max-w-[140px] xs:max-w-[200px]"
                 placeholder="Untitled Document"
                 aria-label="Document title"
               />
@@ -1079,7 +910,7 @@ function ArabiMalayalamEditor() {
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={handleNewFile}
-              className="min-h-11 px-3 rounded-xl bg-[#eaf4ed] dark:bg-[#203328] text-[#137333] dark:text-[#a3e635] hover:bg-[#dcefe3] transition-colors cursor-pointer flex items-center gap-1 font-extrabold text-xs shadow-2xs active:scale-95"
+              className="min-h-11 px-3 rounded-xl bg-primary-soft text-primary hover:bg-accent transition-colors cursor-pointer flex items-center gap-1 font-extrabold text-xs shadow-2xs active:scale-95"
               aria-label="Create new document"
             >
               <Plus className="w-4 h-4" strokeWidth={2.75} />
@@ -1087,7 +918,7 @@ function ArabiMalayalamEditor() {
             </button>
             <button
               onClick={handleCopy}
-              className="min-h-11 min-w-11 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-[#3c4043] dark:text-[#e8eaed] flex items-center justify-center cursor-pointer transition-colors active:scale-95"
+              className="min-h-11 min-w-11 rounded-xl hover:bg-muted text-foreground flex items-center justify-center cursor-pointer transition-colors active:scale-95"
               aria-label="Copy document text"
             >
               <Copy className="w-4 h-4" strokeWidth={2.5} />
@@ -1095,233 +926,96 @@ function ArabiMalayalamEditor() {
           </div>
         </header>
 
-        {/* DOCUMENT PAPER CANVAS */}
-        <div className="editor-workspace flex-1 overflow-y-auto p-0 sm:p-4 md:p-8 flex flex-col items-center relative">
-          {/* WRAPPER FOR TOOLBAR AND PAPER */}
-          <div className="w-full max-w-[850px] flex flex-col">
-            {/* TOP TOOLBAR: Sticky on mobile for effortless editing without scrolling, transparent on desktop */}
-            <div className="sticky top-0 z-20 w-full bg-white/95 dark:bg-[#181a1b]/95 backdrop-blur-md border-b border-[#dadce0]/80 dark:border-[#2d3135] md:static md:bg-transparent md:border-b-0 py-1.5 px-2.5 md:px-0 flex items-center justify-between select-none gap-1 sm:gap-2 shadow-2xs md:shadow-none">
-              <div className="flex w-full items-center justify-start gap-1 overflow-x-auto overscroll-x-contain md:w-auto md:gap-3">
-                {/* Undo */}
-                <button
-                  onClick={handleUndo}
-                  disabled={historyStack.length <= 1}
-                  className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30 transition-colors cursor-pointer md:min-h-8 md:min-w-8 md:rounded-lg"
-                  aria-label="Undo"
+        {/* DOCUMENT WORKSPACE */}
+        <div className="editor-workspace flex flex-1 flex-col items-center overflow-y-auto sm:px-4 sm:pb-4 md:px-6 md:pb-6">
+          <div className="flex w-full max-w-[900px] flex-1 flex-col">
+            <div className="no-print sticky top-0 z-20 px-2.5 max-md:border-b max-md:bg-card/95 max-md:backdrop-blur-md md:static md:px-0 md:pt-2">
+              <EditorToolbar
+                editor={editor}
+                font={selectedFont}
+                onFontChange={(f) => {
+                  loadFont(f);
+                  setSelectedFont(f);
+                }}
+                defaultFontSize={DEFAULT_FONT_SIZE}
+                defaultAlignment={isEnglish ? "left" : "right"}
+                onPrint={() => window.print()}
+              >
+                <span
+                  role="status"
+                  className="hidden items-center gap-1 whitespace-nowrap text-xs font-semibold text-muted-foreground md:flex"
                 >
-                  <Undo2
-                    className="w-4 h-4 sm:w-5 sm:h-5 text-[#202124] dark:text-[#e8eaed]"
-                    strokeWidth={2.5}
-                  />
-                </button>
-
-                {/* Redo */}
-                <button
-                  onClick={handleRedo}
-                  disabled={redoStack.length === 0}
-                  className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-30 transition-colors cursor-pointer md:min-h-8 md:min-w-8 md:rounded-lg"
-                  aria-label="Redo"
-                >
-                  <Redo2
-                    className="w-4 h-4 sm:w-5 sm:h-5 text-[#202124] dark:text-[#e8eaed]"
-                    strokeWidth={2.5}
-                  />
-                </button>
-
-                <div className="h-4 sm:h-5 w-[1.5px] bg-[#cfd4dc] dark:bg-[#3c4043] mx-0.5 sm:mx-1" />
-
-                {/* Font Selector Dropdown */}
-                <div className="relative shrink-0">
-                  <button
-                    onClick={() => setShowFontDropdown(!showFontDropdown)}
-                    className="flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-xs font-bold text-[#202124] transition-colors hover:bg-black/5 dark:text-[#e8eaed] dark:hover:bg-white/10 sm:text-sm md:min-h-8 md:rounded-lg"
-                    aria-haspopup="listbox"
-                    aria-expanded={showFontDropdown}
-                    aria-controls="font-picker"
-                  >
-                    <span className="truncate max-w-[70px] sm:max-w-none">
-                      {selectedFont.name.replace(/ \(.*\)/, "")}
-                    </span>
-                    <ChevronDown
-                      className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#202124] dark:text-[#e8eaed]"
-                      strokeWidth={2.5}
-                    />
-                  </button>
-
-                  {showFontDropdown && (
-                    <div
-                      id="font-picker"
-                      role="listbox"
-                      aria-label="Editor font"
-                      className="absolute left-0 top-full mt-1.5 w-60 bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-xl shadow-xl py-1.5 z-50"
-                    >
-                      <div className="px-3.5 py-1 text-xs uppercase font-extrabold text-[#5f6368] tracking-wider">
-                        Select Font
-                      </div>
-                      {FONT_FAMILIES.map((f) => (
-                        <button
-                          key={f.id}
-                          onClick={() => {
-                            loadFont(f);
-                            setSelectedFont(f);
-                            setShowFontDropdown(false);
-                            toast.success(`Font changed to ${f.name}`);
-                          }}
-                          className={`w-full px-3.5 py-2 text-left flex items-center justify-between hover:bg-[#f1f3f4] dark:hover:bg-[#2d3135] text-sm font-bold transition-colors cursor-pointer ${
-                            selectedFont.id === f.id
-                              ? "bg-[#eaf4ed] dark:bg-[#203328] text-[#137333] dark:text-[#a3e635]"
-                              : "text-[#202124] dark:text-[#e8eaed]"
-                          }`}
-                          style={{ fontFamily: f.font }}
-                          role="option"
-                          aria-selected={selectedFont.id === f.id}
-                        >
-                          <span>{f.name}</span>
-                          <span className="text-base opacity-75">سَلَام</span>
-                        </button>
-                      ))}
-                    </div>
+                  {isSaved ? (
+                    <>
+                      <Check className="size-3.5 text-primary" strokeWidth={2.75} /> Saved
+                    </>
+                  ) : (
+                    "Saving…"
                   )}
-                </div>
-
-                <div className="h-4 sm:h-5 w-[1.5px] bg-[#cfd4dc] dark:bg-[#3c4043] mx-0.5 sm:mx-1" />
-
-                {/* Bold */}
-                <button
-                  onClick={() => setIsBold(!isBold)}
-                  className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl text-xs font-extrabold transition-colors cursor-pointer sm:text-sm md:min-h-8 md:min-w-8 md:rounded-lg ${
-                    isBold
-                      ? "bg-[#137333] text-white shadow-xs"
-                      : "text-[#202124] dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/10"
-                  }`}
-                  aria-label="Bold"
-                  aria-pressed={isBold}
-                >
-                  <Bold className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={3} />
-                </button>
-
-                {/* Italic */}
-                <button
-                  onClick={() => setIsItalic(!isItalic)}
-                  className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-colors cursor-pointer sm:text-sm md:min-h-8 md:min-w-8 md:rounded-lg ${
-                    isItalic
-                      ? "bg-[#137333] text-white shadow-xs"
-                      : "text-[#202124] dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/10"
-                  }`}
-                  aria-label="Italic"
-                  aria-pressed={isItalic}
-                >
-                  <Italic className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={2.75} />
-                </button>
-
-                {/* Underline */}
-                <button
-                  onClick={() => setIsUnderline(!isUnderline)}
-                  className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-colors cursor-pointer sm:text-sm md:min-h-8 md:min-w-8 md:rounded-lg ${
-                    isUnderline
-                      ? "bg-[#137333] text-white shadow-xs"
-                      : "text-[#202124] dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/10"
-                  }`}
-                  aria-label="Underline"
-                  aria-pressed={isUnderline}
-                >
-                  <Underline className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={2.75} />
-                </button>
-
-                {/* Align Center */}
-                <button
-                  onClick={() => setTextAlign((prev) => (prev === "center" ? "right" : "center"))}
-                  className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl font-bold transition-colors cursor-pointer md:min-h-8 md:min-w-8 md:rounded-lg ${
-                    textAlign === "center"
-                      ? "bg-[#137333] text-white shadow-xs"
-                      : "text-[#202124] dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/10"
-                  }`}
-                  aria-label={textAlign === "center" ? "Align text right" : "Align text center"}
-                  aria-pressed={textAlign === "center"}
-                >
-                  <AlignCenter className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={2.75} />
-                </button>
-              </div>
-
-              {/* Right Autosave Status: only on desktop */}
-              <div className="hidden md:flex text-xs font-bold text-[#5f6368] dark:text-[#9aa0a6] items-center gap-1.5 shrink-0">
-                {isSaved ? (
-                  <span className="text-[#137333] dark:text-[#a3e635] flex items-center gap-1 font-bold">
-                    <Check className="w-4 h-4" strokeWidth={2.75} /> Saved
-                  </span>
-                ) : (
-                  <span className="font-bold">Saving...</span>
-                )}
-              </div>
+                </span>
+                <SettingsMenu
+                  settings={settings}
+                  onChange={updateSettings}
+                  onFeedback={() => setShowFeedbackModal(true)}
+                  shortcutLabel={shortcutLabel}
+                />
+              </EditorToolbar>
             </div>
 
-            {/* White Paper Sheet: Edge-to-edge native note style on mobile, elevated sheet on desktop */}
+            {/* Paper: edge-to-edge on a phone, a card with the dock along its bottom edge on desktop */}
             <div
               ref={paperRef}
-              className="w-full min-h-[calc(100dvh-156px)] sm:min-h-[750px] bg-white dark:bg-[#1e1e1e] border-0 sm:border border-[#dadce0] dark:border-[#2d3135] rounded-none sm:rounded-xl shadow-none sm:shadow-[0_2px_14px_rgba(0,0,0,0.06)] p-4 sm:p-8 md:p-12 pb-36 sm:pb-16 relative flex flex-col mb-2"
+              className="print-surface relative flex min-h-[calc(100dvh-8rem)] flex-1 flex-col rounded-none border-0 bg-paper p-4 pb-28 shadow-none sm:rounded-xl sm:border sm:border-border sm:p-8 sm:shadow-paper md:p-10 md:pb-6"
             >
-              <textarea
-                ref={textareaRef}
-                value={text}
-                onChange={handleTextChange}
-                onPaste={handlePaste}
-                onKeyDown={handleKeyDown}
-                onFocus={() => loadFont(selectedFont)}
-                dir={textAlign === "right" ? "rtl" : "ltr"}
-                aria-label="Arabi-Malayalam transliteration editor"
-                aria-controls={suggestions.length > 0 ? "transliteration-suggestions" : undefined}
-                aria-activedescendant={
-                  suggestions.length > 0
-                    ? `transliteration-suggestion-${activeSuggestionIdx}`
-                    : undefined
-                }
-                placeholder="Type Manglish (njan, evide, engane), Malayalam, or Arabic…"
+              <div
+                id="editor-surface"
+                className="arabitype-editor flex flex-1 flex-col font-medium text-paper-foreground"
                 style={{
                   fontFamily: selectedFont.font,
-                  fontSize: `${fontSize}px`,
-                  fontWeight: isBold ? "bold" : "normal",
-                  fontStyle: isItalic ? "italic" : "normal",
-                  textDecoration: isUnderline ? "underline" : "none",
-                  textAlign: textAlign,
+                  fontSize: `${DEFAULT_FONT_SIZE}px`,
                   lineHeight: "2.2",
                 }}
-                className="w-full h-full flex-1 resize-none bg-transparent border-0 focus:outline-none focus:ring-0 text-[#202124] dark:text-[#e8eaed] font-medium"
-              />
+                onFocus={() => loadFont(selectedFont)}
+              >
+                <EditorContent editor={editor} className="flex flex-1 flex-col" />
+              </div>
 
               {/* FLOATING SUGGESTIONS POPUP (EXACTLY UNDER THE WORD BEING TYPED) */}
-              {suggestions.length > 0 && suggestionPos && (
+              {settings.showSuggestions && !isEnglish && sug.list.length > 0 && sug.pos && (
                 <div
                   style={{
-                    top: `${suggestionPos.top}px`,
-                    left: `${suggestionPos.left}px`,
+                    top: `${sug.pos.top}px`,
+                    left: `${sug.pos.left}px`,
                   }}
                   ref={suggestionListRef}
                   id="transliteration-suggestions"
                   role="listbox"
                   aria-label="Transliteration suggestions"
-                  // Keep focus in the textarea so a tap doesn't close the phone keyboard.
+                  // Keep focus in the editor so a tap doesn't close the phone keyboard.
                   onMouseDown={(e) => e.preventDefault()}
-                  className="absolute z-50 w-56 max-w-[calc(100vw-36px)] max-h-[min(26rem,48vh)] overflow-y-auto overscroll-contain bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-xl shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-75 select-none"
+                  className="absolute z-50 w-56 max-w-[calc(100vw-36px)] max-h-[min(26rem,48vh)] overflow-y-auto overscroll-contain bg-popover border border-border rounded-xl shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-75 select-none"
                 >
                   <div className="flex flex-col gap-0.5">
-                    {suggestions.map((sug, idx) => {
-                      const isSelected = idx === activeSuggestionIdx;
-                      const isTyped = sug.source === "typed";
+                    {sug.list.map((candidate, idx) => {
+                      const isSelected = idx === sug.active;
+                      const isTyped = candidate.source === "typed";
                       const hint =
-                        !isTyped && sug.malayalam !== sug.text ? sug.malayalam : undefined;
+                        !isTyped && candidate.malayalam !== candidate.text
+                          ? candidate.malayalam
+                          : undefined;
                       return (
                         <button
                           type="button"
-                          key={`${idx}-${sug.text}`}
+                          key={`${idx}-${candidate.text}`}
                           id={`transliteration-suggestion-${idx}`}
-                          onClick={() => applySuggestion(sug)}
+                          onClick={() => applySuggestion(candidate)}
                           role="option"
                           aria-selected={isSelected}
                           title={isTyped ? "Keep exactly what you typed" : undefined}
                           className={`w-full px-3 py-1 flex items-center justify-between cursor-pointer rounded-lg transition-colors ${
                             isSelected
-                              ? "bg-[#dcefe3] dark:bg-[#1b3d2b] text-[#137333] dark:text-[#a3e635] font-bold"
-                              : "text-[#202124] dark:text-[#e8eaed] hover:bg-[#f1f3f4] dark:hover:bg-[#2d3135]"
+                              ? "bg-primary-soft text-primary font-bold"
+                              : "text-foreground hover:bg-muted"
                           }`}
                         >
                           <div className="flex items-center gap-2.5 overflow-hidden w-full">
@@ -1335,12 +1029,12 @@ function ArabiMalayalamEditor() {
                                 }`}
                                 style={{ fontFamily: isTyped ? "monospace" : selectedFont.font }}
                               >
-                                {sug.text}
+                                {candidate.text}
                               </span>
                               {hint && (
                                 <span
                                   lang="ml"
-                                  className="text-xs font-normal text-[#5f6368] dark:text-[#9aa0a6] truncate max-w-full"
+                                  className="text-xs font-normal text-muted-foreground truncate max-w-full"
                                 >
                                   {hint}
                                 </span>
@@ -1353,229 +1047,73 @@ function ArabiMalayalamEditor() {
                   </div>
                 </div>
               )}
+
+              <EditorDock
+                isListening={isListening}
+                onToggleVoice={toggleVoiceTyping}
+                onCopyText={handleCopy}
+                onCopyStyled={handleCopyStyled}
+                onDownload={handleDownload}
+              >
+                <LanguageToggle
+                  value={settings.inputLanguage}
+                  onChange={(inputLanguage) => updateSettings({ inputLanguage })}
+                />
+              </EditorDock>
             </div>
           </div>
         </div>
-
-        {/* BOTTOM FLOATING DOCK */}
-        <div className="absolute bottom-[calc(0.75rem+env(safe-area-inset-bottom))] sm:bottom-6 left-0 right-0 flex justify-center pointer-events-none z-30 px-3">
-          <div className="pointer-events-auto bg-white/95 dark:bg-[#1e1e1e]/95 backdrop-blur-xl border border-[#dadce0] dark:border-[#3c4043] rounded-2xl sm:rounded-full shadow-lg px-2.5 sm:px-3 py-1 flex items-center gap-1 sm:gap-2.5">
-            {/* Voice Typing */}
-            <button
-              onClick={toggleVoiceTyping}
-              className={`min-h-11 px-3 sm:px-4 text-sm font-bold rounded-xl sm:rounded-full flex items-center gap-2 transition-colors cursor-pointer active:scale-95 ${
-                isListening
-                  ? "bg-red-500 text-white animate-pulse"
-                  : "hover:bg-[#f1f3f4] dark:hover:bg-[#2d3135] text-[#3c4043] dark:text-[#e8eaed]"
-              }`}
-            >
-              {isListening ? (
-                <>
-                  <MicOff className="w-4 h-4" strokeWidth={2.5} />
-                  <span>Listening...</span>
-                </>
-              ) : (
-                <>
-                  <Mic className="w-4 h-4 text-[#5f6368]" strokeWidth={2.5} />
-                  <span>Voice Typing</span>
-                </>
-              )}
-            </button>
-
-            <div className="h-5 w-[1.5px] bg-[#dadce0] dark:bg-[#3c4043]" />
-
-            {/* Copy */}
-            <button
-              onClick={handleCopy}
-              className="min-h-11 px-3 sm:px-4 text-sm font-bold rounded-xl sm:rounded-full hover:bg-[#f1f3f4] dark:hover:bg-[#2d3135] text-[#3c4043] dark:text-[#e8eaed] flex items-center gap-2 transition-colors cursor-pointer active:scale-95"
-            >
-              <Copy className="w-4 h-4 text-[#5f6368]" strokeWidth={2.5} />
-              <span>Copy</span>
-            </button>
-
-            {/* Chevron toggle for extra tools */}
-            <button
-              onClick={() => setShowBottomMore(!showBottomMore)}
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl sm:rounded-full hover:bg-[#f1f3f4] dark:hover:bg-[#2d3135] text-[#5f6368] cursor-pointer active:scale-95"
-              aria-label={showBottomMore ? "Hide document tools" : "Show document tools"}
-              aria-expanded={showBottomMore}
-              aria-controls="document-tools"
-            >
-              {showBottomMore ? (
-                <ChevronDown className="w-4 h-4" strokeWidth={2.5} />
-              ) : (
-                <ChevronUp className="w-4 h-4" strokeWidth={2.5} />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Extra Tools Drawer / Mobile Bottom Action Sheet */}
-        {showBottomMore && (
-          <div className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] left-4 right-4 sm:left-auto sm:right-auto flex justify-center pointer-events-none z-40 animate-in fade-in slide-in-from-bottom-2">
-            <div
-              id="document-tools"
-              className="pointer-events-auto bg-white dark:bg-[#1e1e1e] border border-[#dadce0] dark:border-[#3c4043] rounded-2xl shadow-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm font-bold w-full max-w-sm sm:max-w-md"
-            >
-              <span className="text-[#5f6368] dark:text-[#9aa0a6] text-xs">
-                {text.trim() ? text.trim().split(/\s+/).length : 0} words · {text.length} characters
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `${title.replace(/\s+/g, "-") || "document"}.txt`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    toast.success("Downloaded document");
-                  }}
-                  className="px-3 py-1.5 bg-[#f1f3f4] dark:bg-[#2d3135] hover:bg-[#e8eaed] rounded-xl font-bold flex items-center gap-1.5 cursor-pointer text-xs"
-                >
-                  <Download className="w-3.5 h-3.5" strokeWidth={2.5} /> Download
-                </button>
-                <button
-                  onClick={(e) => {
-                    setShowBottomMore(false);
-                    requestDeleteDoc(currentDocId, title, e);
-                  }}
-                  className="px-3 py-1.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer text-xs"
-                >
-                  <Trash2 className="w-3.5 h-3.5" strokeWidth={2.5} /> Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
 
-      {/* FEEDBACK MODAL (SENDS VIA WHATSAPP TO +919562770397) */}
-      {showFeedbackModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="feedback-dialog-title"
-            className="bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-2xl w-full max-w-md shadow-2xl p-5 flex flex-col gap-3"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#25D366]/15 text-[#25D366] flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h2
-                    id="feedback-dialog-title"
-                    className="font-extrabold text-base text-[#202124] dark:text-[#e8eaed]"
-                  >
-                    Tell us your feedback
-                  </h2>
-                  <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] font-medium">
-                    Direct to WhatsApp (+91 95627 70397)
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowFeedbackModal(false)}
-                className="p-1 rounded-md text-[#5f6368] hover:text-foreground cursor-pointer"
-                aria-label="Close feedback dialog"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* FEEDBACK (SENDS VIA WHATSAPP TO +919562770397) */}
+      <Dialog open={showFeedbackModal} onOpenChange={setShowFeedbackModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Tell us your feedback</DialogTitle>
+            <DialogDescription>Opens a WhatsApp chat with us (+91 95627 70397).</DialogDescription>
+          </DialogHeader>
+          <textarea
+            value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
+            aria-label="Your feedback"
+            placeholder="What can we improve in ArabiMalayalam? Write your thoughts, suggestions, or bug reports here..."
+            rows={4}
+            className="w-full resize-none rounded-lg border border-input bg-transparent p-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFeedbackModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSendFeedback}>
+              <MessageCircle className="size-4" /> Send via WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            <textarea
-              value={feedbackText}
-              onChange={(e) => setFeedbackText(e.target.value)}
-              placeholder="What can we improve in ArabiMalayalam? Write your thoughts, suggestions, or bug reports here..."
-              rows={4}
-              className="w-full p-3 rounded-xl border border-[#dadce0] dark:border-[#3c4043] bg-transparent text-sm font-medium focus:outline-none focus:border-[#25D366] focus:ring-1 focus:ring-[#25D366]"
-            />
-
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] font-medium hidden xs:inline">
-                Opens WhatsApp chat
-              </span>
-              <div className="flex items-center gap-2 ml-auto">
-                <button
-                  onClick={() => setShowFeedbackModal(false)}
-                  className="px-3.5 py-2 rounded-xl border border-[#dadce0] dark:border-[#3c4043] text-xs font-bold cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSendFeedback}
-                  className="px-4 py-2 rounded-xl bg-[#25D366] hover:bg-[#1ebc5a] text-white text-xs font-extrabold cursor-pointer shadow-xs flex items-center gap-1.5 transition-colors"
-                >
-                  <MessageCircle className="w-4 h-4 fill-white" />
-                  <span>Send Feedback</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CUSTOM DELETE CONFIRMATION MODAL */}
-      {docToDelete && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="delete-dialog-title"
-            className="bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-2xl w-full max-w-sm shadow-2xl p-5 flex flex-col gap-3.5"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                  <Trash2 className="w-5 h-5" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h2
-                    id="delete-dialog-title"
-                    className="font-extrabold text-base text-[#202124] dark:text-[#e8eaed]"
-                  >
-                    Delete document?
-                  </h2>
-                  <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] truncate max-w-[190px] font-medium">
-                    "{docToDelete.title}"
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setDocToDelete(null)}
-                className="p-1 rounded-md text-[#5f6368] hover:text-foreground cursor-pointer"
-                aria-label="Close delete confirmation"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs font-medium text-[#5f6368] dark:text-[#9aa0a6] leading-relaxed">
-              Are you sure you want to delete this document? All content in this document will be
-              permanently deleted from your browser storage.
-            </p>
-
-            <div className="flex justify-end gap-2 mt-1">
-              <button
-                onClick={() => setDocToDelete(null)}
-                className="px-4 py-2 rounded-xl border border-[#dadce0] dark:border-[#3c4043] text-xs font-bold cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold cursor-pointer shadow-xs transition-colors flex items-center gap-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" strokeWidth={2.5} />
-                <span>Delete</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* DELETE CONFIRMATION */}
+      <AlertDialog
+        open={docToDelete !== null}
+        onOpenChange={(open) => !open && setDocToDelete(null)}
+      >
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete file?</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{docToDelete?.title}” will be removed from this browser. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="size-4" /> Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

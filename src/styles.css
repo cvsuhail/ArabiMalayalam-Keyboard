@@ -135,15 +135,21 @@
 }
 
 .editor-workspace {
-  background-color: #ffffff;
+  background-color: var(--paper);
   background-image: none;
 }
 
+/* The dotted workspace around the paper card; dots follow the theme. */
 @media (min-width: 640px) {
   .editor-workspace {
-    background-color: #f5f6f8;
-    background-image: radial-gradient(#cfd4dc 1.25px, transparent 1.25px);
+    --dot: oklch(0.86 0.006 145);
+    background-color: var(--workspace);
+    background-image: radial-gradient(var(--dot) 1.25px, transparent 1.25px);
     background-size: 22px 22px;
+  }
+
+  .dark .editor-workspace {
+    --dot: oklch(0.32 0.008 156);
   }
 }
 
@@ -271,15 +277,21 @@
 }
 
 /* Editor (ProseMirror) typography */
+.arabitype-editor > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* Arabi-Malayalam is right-to-left; the editor sets dir="rtl" and text-align follows it. */
 .arabitype-editor .ProseMirror {
+  flex: 1;
   outline: none;
-  unicode-bidi: plaintext;
   min-height: 40vh;
 }
 
 .arabitype-editor .ProseMirror p {
-  margin: 0 0 0.75em;
-  unicode-bidi: plaintext;
+  margin: 0 0 0.35em;
 }
 
 .arabitype-editor .ProseMirror h1 {
