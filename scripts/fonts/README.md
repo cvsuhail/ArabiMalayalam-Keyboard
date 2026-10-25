@@ -10,6 +10,7 @@ node --experimental-strip-types scripts/export-arml-table.mjs   # refreshes the 
 scripts/fonts/.venv/bin/python scripts/fonts/build.py --publish  # builds out/ and public/fonts/arml/
 ```
 
+- `--publish` also writes TTFs and zips (per font and one for all) to `public/fonts/arml/download/`.
 - `fonts.json`: the family (ids, labels, sources). Rename or add entries freely.
 - Each glyph is shaped with HarfBuzz from its source, so joining, dots and composed letters match
   the source font. Letters a source lacks are borrowed from the fallback fonts and listed in the output.

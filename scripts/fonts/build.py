@@ -22,6 +22,7 @@ import json
 import shutil
 import statistics
 import sys
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -365,6 +366,77 @@ class Builder:
         return ttf
 
 
+README = """{label} ({id}) - ARML font
+
+{id} draws ARML text: the pre-shaped, visual-order legacy encoding for Arabi-Malayalam.
+Type or convert text at https://arabi-malayalam.cvsuhail.online/ and use "Copy as ARML",
+then paste it where this font is applied. The encoding is described in ARML-SPEC.md,
+included in this archive.
+
+Notes
+- Latin letters share codes with ARML glyphs, so give Latin text a Latin font.
+- Vowel marks use GPOS mark-to-base positioning. Programs that ignore it draw them off-centre.
+- Keep one line per text box: lines are stored in drawing order and must not be re-wrapped.
+
+Licence
+This font is a modified version of {base}, renamed as the SIL Open Font License 1.1
+requires. It is free to use, study, copy, modify and redistribute under that licence.
+It must not be sold by itself. The licence text of the original font is in
+{licence_file}. Please keep it with the font.
+"""
+
+
+def publish(built: list[dict]) -> None:
+    """Copy web fonts, full TTFs, licence texts and download zips to public/fonts/arml/."""
+    download = PUBLIC / "download"
+    (PUBLIC / "licenses").mkdir(parents=True, exist_ok=True)
+    download.mkdir(parents=True, exist_ok=True)
+    manifest = []
+    spec_text = (ROOT / "replica" / "arml" / "SPEC.md").read_text()
+    shutil.copy(ROOT / "replica" / "arml" / "SPEC.md", PUBLIC / "ARML-SPEC.md")
+    everything = zipfile.ZipFile(download / "cvsuhail-arml-fonts.zip", "w", zipfile.ZIP_DEFLATED)
+    for spec in built:
+        font_id = spec["id"]
+        licence_name = f"{spec['licence']}-OFL.txt"
+        licence_text = (SOURCES / "licenses" / licence_name).read_text()
+        shutil.copy(OUT / f"{font_id}.woff2", PUBLIC / f"{font_id}.woff2")
+        shutil.copy(OUT / f"{font_id}.ttf", download / f"{font_id}.ttf")
+        shutil.copy(SOURCES / "licenses" / licence_name, PUBLIC / "licenses" / licence_name)
+        readme = README.format(
+            label=spec["label"],
+            id=font_id,
+            base=spec["source"].split("[")[0].replace("-Regular.ttf", "").replace(".ttf", ""),
+            licence_file=f"OFL-{spec['licence']}.txt",
+        )
+        for archive_path, folder in ((download / f"{font_id}.zip", ""), (None, f"{font_id}/")):
+            files = {
+                f"{folder}ARML-SPEC.md": spec_text.encode(),
+                f"{folder}{font_id}.ttf": (OUT / f"{font_id}.ttf").read_bytes(),
+                f"{folder}OFL-{spec['licence']}.txt": licence_text.encode(),
+                f"{folder}README.txt": readme.encode(),
+            }
+            archive = everything if archive_path is None else zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED)
+            for name, data in files.items():
+                archive.writestr(name, data)
+            if archive_path is not None:
+                archive.close()
+        manifest.append(
+            {
+                "id": font_id,
+                "label": spec["label"],
+                "style": spec["style"],
+                "base": spec["source"],
+                "licence": f"licenses/{licence_name}",
+                "file": f"{font_id}.woff2",
+                "ttf": f"download/{font_id}.ttf",
+                "zip": f"download/{font_id}.zip",
+            }
+        )
+    everything.close()
+    (PUBLIC / "fonts.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    print(f"published {len(manifest)} fonts to {PUBLIC.relative_to(ROOT)}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--only", action="append", help="build just this font id")
@@ -393,25 +465,7 @@ def main() -> int:
         built.append(spec)
 
     if args.publish:
-        PUBLIC.mkdir(parents=True, exist_ok=True)
-        (PUBLIC / "licenses").mkdir(exist_ok=True)
-        manifest = []
-        for spec in built:
-            shutil.copy(OUT / f"{spec['id']}.woff2", PUBLIC / f"{spec['id']}.woff2")
-            licence = SOURCES / "licenses" / f"{spec['licence']}-OFL.txt"
-            shutil.copy(licence, PUBLIC / "licenses" / f"{spec['licence']}-OFL.txt")
-            manifest.append(
-                {
-                    "id": spec["id"],
-                    "label": spec["label"],
-                    "style": spec["style"],
-                    "base": spec["source"],
-                    "licence": f"licenses/{spec['licence']}-OFL.txt",
-                    "file": f"{spec['id']}.woff2",
-                }
-            )
-        (PUBLIC / "fonts.json").write_text(json.dumps(manifest, indent=2) + "\n")
-        print(f"published {len(manifest)} fonts to {PUBLIC.relative_to(ROOT)}")
+        publish(built)
     return 0
 
 

@@ -5,7 +5,9 @@
     "style": "Classic naskh with a calligraphic flow",
     "base": "Amiri-Regular.ttf",
     "licence": "licenses/amiri-OFL.txt",
-    "file": "cvsuhail-vahid.woff2"
+    "file": "cvsuhail-vahid.woff2",
+    "ttf": "download/cvsuhail-vahid.ttf",
+    "zip": "download/cvsuhail-vahid.zip"
   },
   {
     "id": "cvsuhail-isnan",
@@ -13,7 +15,9 @@
     "style": "Clean, even naskh for long reading",
     "base": "NotoNaskhArabic[wght].ttf",
     "licence": "licenses/notonaskharabic-OFL.txt",
-    "file": "cvsuhail-isnan.woff2"
+    "file": "cvsuhail-isnan.woff2",
+    "ttf": "download/cvsuhail-isnan.ttf",
+    "zip": "download/cvsuhail-isnan.zip"
   },
   {
     "id": "cvsuhail-nabil",
@@ -21,7 +25,9 @@
     "style": "Open, generous naskh with a large x-height",
     "base": "ScheherazadeNew-Regular.ttf",
     "licence": "licenses/scheherazadenew-OFL.txt",
-    "file": "cvsuhail-nabil.woff2"
+    "file": "cvsuhail-nabil.woff2",
+    "ttf": "download/cvsuhail-nabil.ttf",
+    "zip": "download/cvsuhail-nabil.zip"
   },
   {
     "id": "cvsuhail-zaid",
@@ -29,7 +35,9 @@
     "style": "Light, slanted nastaliq-leaning hand",
     "base": "Lateef-Regular.ttf",
     "licence": "licenses/lateef-OFL.txt",
-    "file": "cvsuhail-zaid.woff2"
+    "file": "cvsuhail-zaid.woff2",
+    "ttf": "download/cvsuhail-zaid.ttf",
+    "zip": "download/cvsuhail-zaid.zip"
   },
   {
     "id": "cvsuhail-rayyan",
@@ -37,7 +45,9 @@
     "style": "Ruqaa: quick, compact, handwritten",
     "base": "ArefRuqaa-Regular.ttf",
     "licence": "licenses/arefruqaa-OFL.txt",
-    "file": "cvsuhail-rayyan.woff2"
+    "file": "cvsuhail-rayyan.woff2",
+    "ttf": "download/cvsuhail-rayyan.ttf",
+    "zip": "download/cvsuhail-rayyan.zip"
   },
   {
     "id": "cvsuhail-faris",
@@ -45,7 +55,9 @@
     "style": "Kufi: geometric and strong for headings",
     "base": "ReemKufi[wght].ttf",
     "licence": "licenses/reemkufi-OFL.txt",
-    "file": "cvsuhail-faris.woff2"
+    "file": "cvsuhail-faris.woff2",
+    "ttf": "download/cvsuhail-faris.ttf",
+    "zip": "download/cvsuhail-faris.zip"
   },
   {
     "id": "cvsuhail-amal",
@@ -53,7 +65,9 @@
     "style": "Soft, rounded sans for screens",
     "base": "Harmattan-Regular.ttf",
     "licence": "licenses/harmattan-OFL.txt",
-    "file": "cvsuhail-amal.woff2"
+    "file": "cvsuhail-amal.woff2",
+    "ttf": "download/cvsuhail-amal.ttf",
+    "zip": "download/cvsuhail-amal.zip"
   },
   {
     "id": "cvsuhail-shabab",
@@ -61,6 +75,8 @@
     "style": "Modern sans, neutral and legible",
     "base": "NotoSansArabic[wdth,wght].ttf",
     "licence": "licenses/notosansarabic-OFL.txt",
-    "file": "cvsuhail-shabab.woff2"
+    "file": "cvsuhail-shabab.woff2",
+    "ttf": "download/cvsuhail-shabab.ttf",
+    "zip": "download/cvsuhail-shabab.zip"
   }
 ]

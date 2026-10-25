@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Copy } from "lucide-react";
+import { Copy, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { toArmlDetailed } from "../lib/arml";
@@ -32,6 +32,8 @@ interface ArmlFont {
   base: string;
   licence: string;
   file: string;
+  ttf: string;
+  zip: string;
 }
 
 const SAMPLE =
@@ -106,8 +108,14 @@ function FontsPage() {
           ARML is a legacy code for Arabi-Malayalam, like FML is for Malayalam. Each letter is
           already shaped and each line is stored as it is drawn, so programs that cannot join or
           reorder Arabic still show it correctly once an ARML font is applied. Type or paste your
-          text below, see it in every font, and copy it as ARML for free.
+          text below, see it in every font, and copy it as ARML for free. The fonts are free to
+          download too.
         </p>
+        <Button asChild variant="outline" className="mt-5">
+          <a href="/fonts/arml/download/cvsuhail-arml-fonts.zip" download>
+            <Download /> Download all eight fonts (zip)
+          </a>
+        </Button>
 
         <section className="mt-8 grid gap-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -185,25 +193,34 @@ function FontsPage() {
               >
                 {converted.text}
               </div>
-              <div className="mt-3 flex items-center justify-between gap-2">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <a
                   href={`/fonts/arml/${font.licence}`}
                   className="text-xs text-muted-foreground underline underline-offset-2"
                 >
                   SIL Open Font Licence
                 </a>
-                <Button variant="outline" size="sm" onClick={copyArml}>
-                  <Copy /> Copy ARML
-                </Button>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`/fonts/arml/${font.zip}`} download>
+                      <Download /> Download
+                    </a>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={copyArml}>
+                    <Copy /> Copy ARML
+                  </Button>
+                </div>
               </div>
             </li>
           ))}
         </ul>
 
         <p className="mt-10 max-w-3xl text-sm leading-6 text-muted-foreground">
-          The previews show the ARML text itself, drawn by each font, not Unicode. Font downloads
-          for other programs are coming soon. The fonts are derived from open-licence Arabic fonts
-          and renamed as their licences require.
+          The previews show the ARML text itself, drawn by each font, not Unicode. Each download is
+          a zip with the TrueType font, the original font&apos;s licence text and a short readme,
+          plus the ARML spec. The fonts are free to use, copy and share under the SIL Open Font
+          Licence. They are modified versions of open fonts, renamed as the licence requires, and
+          may not be sold on their own.
         </p>
       </main>
     </div>
