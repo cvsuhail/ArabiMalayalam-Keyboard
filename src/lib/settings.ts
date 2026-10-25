@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import type { VoiceLanguage } from "./voice/useVoiceTyping";
 
 export interface EditorSettings {
   theme: "light" | "dark";
@@ -7,6 +8,8 @@ export interface EditorSettings {
   /** Cmd/Ctrl+L switches the input language. */
   languageShortcut: boolean;
   inputLanguage: "arabi" | "english";
+  /** What voice typing listens for. */
+  voiceLanguage: VoiceLanguage;
 }
 
 export const SETTINGS_KEY = "arabimalayalam-settings";
@@ -16,6 +19,7 @@ const DEFAULT_SETTINGS: EditorSettings = {
   showSuggestions: true,
   languageShortcut: true,
   inputLanguage: "arabi",
+  voiceLanguage: "ml-IN",
 };
 
 /**

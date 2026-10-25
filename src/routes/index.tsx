@@ -34,6 +34,7 @@ import {
 import { LanguageToggle } from "../components/editor/LanguageToggle";
 import { SettingsMenu } from "../components/editor/SettingsMenu";
 import { useEditorSettings } from "../lib/settings";
+import { VOICE_LANGUAGES, useVoiceTyping, type VoiceLanguage } from "../lib/voice/useVoiceTyping";
 import { FONT_FAMILIES, loadFont, type FontChoice } from "../components/editor/fonts";
 import { toast } from "sonner";
 import type { SmartCandidate } from "../lib/transliteration/smartManglishLayer";
@@ -47,29 +48,6 @@ export const Route = createFileRoute("/")({
   }),
   component: ArabiMalayalamEditor,
 });
-
-interface SpeechRecognitionResultLike {
-  isFinal: boolean;
-  0: { transcript: string };
-}
-
-interface SpeechRecognitionEventLike {
-  resultIndex: number;
-  results: ArrayLike<SpeechRecognitionResultLike>;
-}
-
-interface SpeechRecognitionLike {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onresult: ((event: SpeechRecognitionEventLike) => void | Promise<void>) | null;
-  onerror: (() => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-}
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 let smartEnginePromise: Promise<typeof import("../lib/transliteration/smartManglishLayer")> | null =
   null;
@@ -196,7 +174,6 @@ function ArabiMalayalamEditor() {
   // Document list and auto-save
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [isSaved, setIsSaved] = useState<boolean>(true);
-  const [isListening, setIsListening] = useState<boolean>(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState<boolean>(false);
   const [feedbackText, setFeedbackText] = useState<string>("");
   const [docToDelete, setDocToDelete] = useState<{ id: string; title: string } | null>(null);
@@ -206,7 +183,7 @@ function ArabiMalayalamEditor() {
   const drawerCloseButtonRef = useRef<HTMLButtonElement>(null);
   const drawerWasOpenedRef = useRef(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const touchedRef = useRef(false);
   const previousMalayalamRef = useRef<string | undefined>(undefined);
   const editorRef = useRef<Editor | null>(null);
   const handlersRef = useRef<EditorHandlers | null>(null);
@@ -593,6 +570,7 @@ function ArabiMalayalamEditor() {
 
   // Moving the caret away from the word closes its suggestions.
   const handleEditorSelection = (ed: Editor, transaction: Transaction) => {
+    touchedRef.current = true;
     if (transaction.docChanged) return;
     const typed = wordRef.current;
     if (typed.text && (!ed.state.selection.empty || ed.state.selection.from !== typed.end)) {
@@ -782,67 +760,57 @@ function ArabiMalayalamEditor() {
     />
   );
 
-  // Voice Typing
-  const toggleVoiceTyping = () => {
-    const speechWindow = window as Window & {
-      SpeechRecognition?: SpeechRecognitionConstructor;
-      webkitSpeechRecognition?: SpeechRecognitionConstructor;
-    };
-    const SpeechRecognition =
-      speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      toast.error("Voice typing is not supported in this browser.");
-      return;
+  // Voice typing: finished phrases are inserted at the caret as they are heard.
+  const handleVoicePhrase = async (transcript: string, language: VoiceLanguage) => {
+    const ed = editorRef.current;
+    if (!ed?.isInitialized) return;
+    // Malayalam speech arrives in Malayalam script; convert it like pasted text.
+    let phrase = transcript;
+    if (language === "ml-IN") {
+      const { transliterateSmartPastedText } = await loadSmartEngine();
+      phrase = await transliterateSmartPastedText(transcript);
     }
-
-    if (isListening) {
-      if (recognitionRef.current) recognitionRef.current.stop();
-      setIsListening(false);
-      toast.info("Voice typing stopped.");
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "ml-IN";
-
-      recognition.onresult = async (event: SpeechRecognitionEventLike) => {
-        let transcript = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i];
-          if (result?.isFinal) {
-            transcript += result[0].transcript + " ";
-          }
-        }
-        if (transcript) {
-          // Dictation may mix Malayalam and English words; convert both.
-          const { transliterateSmartPastedText } = await loadSmartEngine();
-          const converted = await transliterateSmartPastedText(transcript.trim());
-          // This callback outlives the render it was created in: read the live editor.
-          const ed = editorRef.current;
-          if (!ed?.isInitialized) return;
-          ed.commands.focus("end");
-          const existing = ed.getText();
-          const gap = existing && !/\s$/.test(existing) ? " " : "";
-          insertPlainText(ed, `${gap}${converted} `);
-        }
-      };
-
-      recognition.onerror = () => setIsListening(false);
-      recognition.onend = () => setIsListening(false);
-
-      recognition.start();
-      recognitionRef.current = recognition;
-      setIsListening(true);
-      toast.success("Listening... speak now in Malayalam or English.");
-    } catch (e) {
-      console.error(e);
-      toast.error("Could not start microphone.");
-    }
+    if (ed.isDestroyed) return;
+    const { $from } = ed.state.selection;
+    const previous = $from.parent.textBetween(
+      Math.max(0, $from.parentOffset - 1),
+      $from.parentOffset,
+    );
+    const gap = previous && !/\s/.test(previous) ? " " : "";
+    insertPlainText(ed, `${gap}${phrase} `);
   };
+
+  const voice = useVoiceTyping({
+    language: settings.voiceLanguage,
+    onFinal: handleVoicePhrase,
+    onProblem: (message) => toast.error(message),
+  });
+
+  const toggleVoiceTyping = () => {
+    const ed = editorRef.current;
+    if (!voice.listening && ed?.isInitialized && !touchedRef.current) {
+      // Nobody has placed the caret yet: dictate at the end, not the top.
+      ed.commands.focus("end");
+    }
+    voice.toggle();
+  };
+
+  const wasListeningRef = useRef(false);
+  useEffect(() => {
+    if (voice.listening && !wasListeningRef.current) {
+      const label = VOICE_LANGUAGES.find((l) => l.value === settings.voiceLanguage)?.label;
+      toast.success(`Listening… speak in ${label}.`);
+    }
+    wasListeningRef.current = voice.listening;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voice.listening]);
+
+  // Dictation belongs to the file it was started in.
+  useEffect(() => {
+    voice.stop();
+    touchedRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDocId]);
 
   return (
     <div className="flex h-dvh min-h-svh w-full overflow-hidden overscroll-none bg-background font-sans text-foreground antialiased">
@@ -1070,8 +1038,11 @@ function ArabiMalayalamEditor() {
               )}
 
               <EditorDock
-                isListening={isListening}
+                isListening={voice.listening}
                 onToggleVoice={toggleVoiceTyping}
+                voiceLanguage={settings.voiceLanguage}
+                onVoiceLanguage={(voiceLanguage) => updateSettings({ voiceLanguage })}
+                interimText={voice.interim}
                 onCopyText={handleCopy}
                 onCopyStyled={handleCopyStyled}
                 onCopyArml={handleCopyArml}
