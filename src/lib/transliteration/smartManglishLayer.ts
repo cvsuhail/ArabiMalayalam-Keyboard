@@ -31,7 +31,11 @@ import {
   registerLexiconEntries,
   spellingPlausibility,
 } from "./malayalamLexicon.ts";
-import { arabicLoanwordForRoman, arabicSpellingForMalayalam } from "./arabicLoanwords.ts";
+import {
+  arabicLoanwordForRoman,
+  arabicSpellingForMalayalam,
+  replaceLoanwordPhrases,
+} from "./arabicLoanwords.ts";
 
 export type CandidateSource =
   "user" | "override" | "lexicon" | "model" | "phonetic" | "completion" | "typed";
@@ -672,9 +676,10 @@ const isLinkOrEmail = (token: string) =>
 
 /** Convert Malayalam text: Arabic loanwords keep their Arabic spelling. */
 export function transliterateMalayalamText(input: string): string {
-  const withLoanwords = input
-    .normalize("NFC")
-    .replace(MALAYALAM_WORD, (word) => arabicSpellingForMalayalam(word) ?? word);
+  const withLoanwords = replaceLoanwordPhrases(input.normalize("NFC")).replace(
+    MALAYALAM_WORD,
+    (word) => arabicSpellingForMalayalam(word) ?? word,
+  );
   return transliterateToArabic(withLoanwords);
 }
 
