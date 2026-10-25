@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "../components/ui/sonner";
 import { PwaInstallPrompt } from "../components/PwaInstallPrompt";
+import { THEME_BOOT_SCRIPT } from "../lib/settings";
 
 const SITE_URL = "https://arabi-malayalam.cvsuhail.online";
 const SOCIAL_IMAGE_URL = `${SITE_URL}/og-image.png`;
@@ -265,8 +266,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-IN">
+    <html lang="en-IN" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <GoogleTagManagerHead />
         <HeadContent />
       </head>
