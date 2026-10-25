@@ -1,31 +1,36 @@
-import { createEngine, type LanguageConfig } from "@piraisoodan/tanglish";
+import { transliterateMalayalamToArabic, withStandardOMarks } from "./malayalamToArabic.ts";
+import { generateMalayalamSpellings } from "./manglishPhonetic.ts";
 import {
-  transliterateMalayalamToArabic,
-  withStandardOMarks,
-} from "./malayalamToArabic.ts";
+  isLexiconPrefix,
+  lexiconBoost,
+  lexiconSize,
+  registerLexiconEntries,
+} from "./malayalamLexicon.ts";
+import { loanwordMalayalamSpellings } from "./arabicLoanwords.ts";
 
 /**
- * Enhanced Arabi-Malayalam & Malayalam Transliterator
- * Incorporates:
- * 1. '@piraisoodan/tanglish' (Manglish / Malayalam engine)
- * 2. A Unicode-aware Malayalam / Arabi-Malayalam engine
- * 3. Comprehensive Manglish-to-Malayalam mapping
+ * Manglish -> Malayalam and Malayalam -> Arabi-Malayalam building blocks.
+ *
+ * Every Arabi-Malayalam spelling is produced from Malayalam by the single
+ * rule engine in malayalamToArabic.ts (or, for Arabic loanwords, taken from
+ * arabicLoanwords.ts), so all suggestions share one consistent orthography.
  */
 
 export const transliterateToArabic = transliterateMalayalamToArabic;
 
-// Common Manglish to Malayalam mapping dictionary
+/**
+ * Curated Manglish spellings whose Malayalam form the phonetic rules cannot
+ * reach, or where a common spelling is ambiguous. Keep only true spelling
+ * variants of one word here, never a different inflection.
+ */
 export const MANGLISH_TO_MALAYALAM_MAP: Record<string, string[]> = {
-  hello: ["ഹലോ", "ഹെല്ലോ"],
+  hello: ["ഹലോ"],
   njan: ["ഞാൻ"],
   njaan: ["ഞാൻ"],
   njanum: ["ഞാനും"],
   njananu: ["ഞാനാണ്"],
   njanennu: ["ഞാനെന്ന്"],
-  salam: ["സലാം"],
-  salaam: ["സലാം"],
   namaskaram: ["നമസ്കാരം"],
-  keralam: ["കേരളം"],
   vellam: ["വെള്ളം"],
   veedu: ["വീട്"],
   veettil: ["വീട്ടിൽ"],
@@ -75,39 +80,33 @@ export const MANGLISH_TO_MALAYALAM_MAP: Record<string, string[]> = {
   kutti: ["കുട്ടി"],
   amma: ["അമ്മ"],
   uppa: ["ഉപ്പ"],
+  umma: ["ഉമ്മ"],
   nalla: ["നല്ല"],
   onnu: ["ഒന്ന്"],
   randu: ["രണ്ട്"],
   moonnu: ["മൂന്ന്"],
   naalu: ["നാല്"],
   anju: ["അഞ്ച്"],
-  aaru_num: ["ആറ്"],
   ezhu: ["ഏഴ്"],
   ettu: ["എട്ട്"],
   onpathu: ["ഒൻപത്"],
   pathu: ["പത്ത്"],
-  ezhuthuka: ["എഴുതുക", "എഴുതുന്നു", "എഴുതി"],
+  ezhuthuka: ["എഴുതുക"],
   ezhuthu: ["എഴുത്ത്"],
   vaayikkuka: ["വായിക്കുക"],
   vaayikkunnu: ["വായിക്കുന്നു"],
   vaayichu: ["വായിച്ചു"],
-  vaayan: ["വായന"],
+  vaayana: ["വായന"],
   arabi: ["അറബി"],
   arabic: ["അറബിക്"],
   malayalam: ["മലയാളം"],
-  arabimalayalam: ["അറബി മലയാളം"],
-  madrasa: ["മദ്രസ"],
-  kithab: ["കിതാബ്"],
-  allah: ["അല്ലാഹ്"],
-  allahu: ["അല്ലാഹു"],
-  muhammed: ["മുഹമ്മദ്"],
-  nabi: ["നബി"],
-  swalath: ["സ്വലാത്ത്"],
-  dua: ["ദുആ"],
+  arabimalayalam: ["അറബിമലയാളം"],
   chothichu: ["ചോദിച്ചു"],
+  chodichu: ["ചോദിച്ചു"],
   paranju: ["പറഞ്ഞു"],
   ariyilla: ["അറിയില്ല"],
   ariyaam: ["അറിയാം"],
+  ariyamo: ["അറിയാമോ"],
   cheyyuka: ["ചെയ്യുക"],
   cheythu: ["ചെയ്തു"],
   pokuka: ["പോകുക"],
@@ -134,661 +133,306 @@ export const MANGLISH_TO_MALAYALAM_MAP: Record<string, string[]> = {
   venam: ["വേണം"],
   venda: ["വേണ്ട"],
   pattum: ["പറ്റും"],
-  pattila: ["പറ്റില്ല"],
+  pattilla: ["പറ്റില്ല"],
   kazhikkam: ["കഴിക്കാം"],
   parayaam: ["പറയാം"],
   parayam: ["പറയാം"],
   cheyyaam: ["ചെയ്യാം"],
   cheyyam: ["ചെയ്യാം"],
-  ariyamo: ["അറിയാമോ"],
   enth: ["എന്ത്"],
   enthu: ["എന്ത്"],
   enthina: ["എന്തിനാ"],
   enthinaan: ["എന്തിനാണ്"],
-  chodichu: ["ചോദിച്ചു"],
   parayunnu: ["പറയുന്നു"],
+  niskaram: ["നിസ്കാരം"],
+  nomb: ["നോമ്പ്"],
+  nombu: ["നോമ്പ്"],
+  perunnal: ["പെരുന്നാൾ"],
+  // Place names the phonetic rules cannot reach.
+  keralam: ["കേരളം"],
+  kerala: ["കേരള"],
+  kozhikode: ["കോഴിക്കോട്"],
+  calicut: ["കോഴിക്കോട്"],
+  thrissur: ["തൃശ്ശൂർ"],
+  thrishur: ["തൃശ്ശൂർ"],
+  trivandrum: ["തിരുവനന്തപുരം"],
+  thiruvananthapuram: ["തിരുവനന്തപുരം"],
+  kasaragod: ["കാസർകോട്"],
+  kasargod: ["കാസർകോട്"],
+  malappuram: ["മലപ്പുറം"],
+  kannur: ["കണ്ണൂർ"],
+  ponnani: ["പൊന്നാനി"],
+  tirur: ["തിരൂർ"],
+  thalassery: ["തലശ്ശേരി"],
 };
-
-// Malayalam consonant mapping
-const CONS_MAP: Array<[string, string]> = [
-  ["ksh", "ക്ഷ"],
-  ["zhh", "ഴ"],
-  ["zh", "ഴ"],
-  ["chh", "ഛ"],
-  ["ch", "ച"],
-  ["ngh", "ഘ"],
-  ["ng", "ങ്ങ"],
-  ["nj", "ഞ"],
-  ["kh", "ഖ"],
-  ["gh", "ഘ"],
-  ["jh", "ഝ"],
-  ["sh", "ശ"],
-  ["thh", "ഥ"],
-  ["th", "ത"],
-  ["dhh", "ഢ"],
-  ["dh", "ധ"],
-  ["ph", "ഫ"],
-  ["bh", "ഭ"],
-  ["LL", "ള്ള"],
-  ["NN", "ണ്ണ"],
-  ["kk", "ക്ക"],
-  ["gg", "ഗ്ഗ"],
-  ["cc", "ച്ച"],
-  ["jj", "ജ്ജ"],
-  ["tt", "ട്ട"],
-  ["dd", "ഡ്ഡ"],
-  ["nn", "ന്ന"],
-  ["pp", "പ്പ"],
-  ["bb", "ബ്ബ"],
-  ["mm", "മ്മ"],
-  ["yy", "യ്യ"],
-  ["ll", "ല്ല"],
-  ["vv", "വ്വ"],
-  ["ss", "സ്സ"],
-  ["hh", "ഹ്ഹ"],
-  ["rr", "റ്റ"],
-  ["k", "ക"],
-  ["g", "ഗ"],
-  ["c", "ച"],
-  ["j", "ജ"],
-  ["T", "ട"],
-  ["D", "ഡ"],
-  ["N", "ണ"],
-  ["t", "ത"],
-  ["d", "ദ"],
-  ["n", "ന"],
-  ["p", "പ"],
-  ["f", "ഫ"],
-  ["b", "ബ"],
-  ["m", "മ"],
-  ["y", "യ"],
-  ["r", "ര"],
-  ["l", "ല"],
-  ["v", "വ"],
-  ["w", "വ"],
-  ["s", "സ"],
-  ["h", "ഹ"],
-  ["q", "ക"],
-  ["z", "സ"],
-];
-
-const VOWEL_MATRA: Array<[string, string]> = [
-  ["aa", "ാ"],
-  ["ee", "ീ"],
-  ["ii", "ീ"],
-  ["oo", "ൂ"],
-  ["uu", "ൂ"],
-  ["ai", "ൈ"],
-  ["au", "ൌ"],
-  ["ou", "ൌ"],
-  ["a", ""],
-  ["i", "ി"],
-  ["u", "ു"],
-  ["e", "െ"],
-  ["o", "ൊ"],
-];
-
-const INDEP_VOWEL: Array<[string, string]> = [
-  ["aa", "ആ"],
-  ["ee", "ഈ"],
-  ["ii", "ഈ"],
-  ["oo", "ഊ"],
-  ["uu", "ഊ"],
-  ["ai", "ഐ"],
-  ["au", "ഔ"],
-  ["ou", "ഔ"],
-  ["a", "അ"],
-  ["i", "ഇ"],
-  ["u", "ഉ"],
-  ["e", "എ"],
-  ["o", "ഒ"],
-];
-
-const CHILLU_MAP: Record<string, string> = {
-  n: "ൻ",
-  N: "ൺ",
-  r: "ർ",
-  l: "ൽ",
-  L: "ൾ",
-  m: "ം",
-  k: "ൿ",
-};
-
-// Manglish configuration for @piraisoodan/tanglish
-const MALAYALAM_MAPPINGS: Array<[string, string]> = [
-  ["kshaa", "ക്ഷാ"], ["ksha", "ക്ഷ"], ["kshii", "ക്ഷീ"], ["kshi", "ക്ഷി"],
-  ["kshu", "ക്ഷു"], ["kshuu", "ക്ഷൂ"], ["kshe", "ക്ഷെ"], ["kshee", "ക്ഷേ"],
-  ["zhhaa", "ഴാ"], ["zhha", "ഴ"], ["zhaa", "ഴാ"], ["zha", "ഴ"],
-  ["chhaa", "ഛാ"], ["chha", "ഛ"], ["chaa", "ചാ"], ["cha", "ച"],
-  ["ngaa", "ങ്ങാ"], ["nga", "ങ"], ["njaa", "ഞാ"], ["nja", "ഞ"],
-  ["khaa", "ഖാ"], ["kha", "ഖ"], ["ghaa", "ഘാ"], ["gha", "ഘ"],
-  ["jhaa", "ഝാ"], ["jha", "ഝ"], ["shaa", "ശാ"], ["sha", "ശ"],
-  ["thhaa", "ഥാ"], ["thha", "ഥ"], ["thaa", "താ"], ["tha", "ത"],
-  ["dhhaa", "ഢാ"], ["dhha", "ഢ"], ["dhaa", "ധാ"], ["dha", "ധ"],
-  ["phaa", "ഫാ"], ["pha", "ഫ"], ["bhaa", "ഭാ"], ["bha", "ഭ"],
-  ["ttaa", "ട്ടാ"], ["tta", "ട്ട"], ["ddaa", "ഡ്ഡാ"], ["dda", "ഡ്ഡ"],
-  ["nnaa", "ണ്ണാ"], ["nna", "ണ്ണ"], ["llaa", "ള്ളാ"], ["lla", "ള്ള"],
-  ["rraa", "റ്റാ"], ["rra", "റ്റ"], ["kaa", "കാ"], ["ka", "ക"],
-  ["gaa", "ഗാ"], ["ga", "ഗ"], ["jaa", "ജാ"], ["ja", "ജ"],
-  ["paa", "പാ"], ["pa", "പ"], ["baa", "ബാ"], ["ba", "ബ"],
-  ["maa", "മാ"], ["ma", "മ"], ["yaa", "യാ"], ["ya", "യ"],
-  ["raa", "രാ"], ["ra", "ര"], ["laa", "ലാ"], ["la", "ല"],
-  ["vaa", "വാ"], ["va", "വ"], ["waa", "വാ"], ["wa", "വ"],
-  ["saa", "സാ"], ["sa", "സ"], ["haa", "ഹാ"], ["ha", "ഹ"],
-  ["hello", "ഹലോ"], ["njan", "ഞാൻ"], ["salam", "സലാം"],
-];
-
-const MALAYALAM_VOWEL_SIGNS: Array<[string, string]> = [
-  ["aa", "ാ"], ["ee", "ീ"], ["ii", "ീ"], ["oo", "ൂ"], ["uu", "ൂ"],
-  ["ai", "ൈ"], ["au", "ൌ"], ["ou", "ൌ"],
-  ["a", ""], ["i", "ി"], ["u", "ു"], ["e", "െ"], ["o", "ൊ"]
-];
-
-let manglishEngine: any = null;
-try {
-  const manglishConfig: LanguageConfig = {
-    id: "manglish",
-    name: "Manglish",
-    nativeName: "മലയാളം",
-    unicodeRange: [0x0d00, 0x0d7f],
-    dictionary: {
-      hello: "ഹലോ",
-      njan: "ഞാൻ",
-      salam: "സലാം",
-      keralam: "കേരളം",
-      vellam: "വെള്ളം",
-      sukhamanu: "സുഖമാണ്",
-      ente: "എന്റെ",
-      ningal: "നിങ്ങൾ",
-      evide: "എവിടെ",
-      entha: "എന്താ",
-      nanni: "നന്ദി",
-      pusthakam: "പുസ്തകം",
-      amma: "അമ്മ",
-      uppa: "ഉപ്പ",
-      malayalam: "മലയാളം",
-    },
-    mappings: MALAYALAM_MAPPINGS,
-    vowelSigns: MALAYALAM_VOWEL_SIGNS,
-  };
-  manglishEngine = createEngine(manglishConfig);
-} catch (e) {
-  console.warn("Could not initialize @piraisoodan/tanglish engine", e);
-}
 
 /**
- * Convert arbitrary Manglish string into phonetic Malayalam
+ * Kerala and Mappila vocabulary that a subtitle-derived frequency list
+ * under-represents. Registered with a moderate frequency so these rank as
+ * real words.
  */
+const SUPPLEMENTARY_WORDS = [
+  // Places
+  "കേരളം",
+  "കോഴിക്കോട്",
+  "മലപ്പുറം",
+  "കണ്ണൂർ",
+  "തൃശ്ശൂർ",
+  "തിരുവനന്തപുരം",
+  "കൊച്ചി",
+  "എറണാകുളം",
+  "പാലക്കാട്",
+  "വയനാട്",
+  "കാസർകോട്",
+  "കൊല്ലം",
+  "ആലപ്പുഴ",
+  "കോട്ടയം",
+  "ഇടുക്കി",
+  "പത്തനംതിട്ട",
+  "പൊന്നാനി",
+  "തിരൂർ",
+  "മഞ്ചേരി",
+  "കൊണ്ടോട്ടി",
+  "വടകര",
+  "തലശ്ശേരി",
+  "മലബാർ",
+  "ഗൾഫ്",
+  "ദുബായ്",
+  "സൗദി",
+  "ഖത്തർ",
+  // Family
+  "ഉമ്മ",
+  "ഉപ്പ",
+  "ഇക്ക",
+  "ഇത്ത",
+  "ഉമ്മാമ",
+  "ഉപ്പാപ്പ",
+  "ഇക്കാക്ക",
+  "താത്ത",
+  "മാമ",
+  "മൂത്താപ്പ",
+  "എളാപ്പ",
+  "എളേമ",
+  "അമ്മായി",
+  "കാക്ക",
+  "ബാപ്പ",
+  "മോൻ",
+  "മോള്",
+  // Faith and community
+  "നിസ്കാരം",
+  "നിസ്കരിക്കുക",
+  "നോമ്പ്",
+  "പള്ളി",
+  "മദ്രസ",
+  "ഉസ്താദ്",
+  "മൗലവി",
+  "മുസ്ലിയാർ",
+  "ഖാസി",
+  "പെരുന്നാൾ",
+  "ബലിപെരുന്നാൾ",
+  "ചെറിയപെരുന്നാൾ",
+  "ഇഫ്താർ",
+  "അത്താഴം",
+  "നേർച്ച",
+  "മൗലിദ്",
+  "റാത്തീബ്",
+  "മഹല്ല്",
+  "ഖബർ",
+  "ഖബർസ്ഥാൻ",
+  "മയ്യിത്ത്",
+  "യാസീൻ",
+  "തക്ബീർ",
+  // Clothing, food, culture
+  "കുപ്പായം",
+  "തട്ടം",
+  "മുണ്ട്",
+  "തൊപ്പി",
+  "പർദ്ദ",
+  "കാച്ചി",
+  "പത്തിരി",
+  "ബിരിയാണി",
+  "നെയ്ച്ചോർ",
+  "ഉന്നക്കായ",
+  "ഈത്തപ്പഴം",
+  "സുലൈമാനി",
+  "കട്ടൻ",
+  "മാപ്പിള",
+  "മാപ്പിളപ്പാട്ട്",
+  "ഒപ്പന",
+  "ദഫ്മുട്ട്",
+  "കോൽക്കളി",
+  // Home, food and farm
+  "പാടം",
+  "നെല്ല്",
+  "വാഴ",
+  "ചക്ക",
+  "കപ്പ",
+  "പപ്പടം",
+  "പായസം",
+  "ഉണ്ണിയപ്പം",
+  "പുട്ട്",
+  "ദോശ",
+  "ഇഡ്ഡലി",
+  "സാമ്പാർ",
+  "അവിയൽ",
+  "തോരൻ",
+  "പാവയ്ക്ക",
+  "വെണ്ടയ്ക്ക",
+  "സവാള",
+  "ഇഞ്ചി",
+  "വള",
+  "കമ്മൽ",
+  "പട്ട്",
+  "നടു",
+  // Language and writing
+  "അറബി",
+  "മലയാളം",
+  "അറബിമലയാളം",
+  "ലിപി",
+  "അക്ഷരം",
+  "ഭാഷ",
+  "വാക്ക്",
+  "വാചകം",
+  "പഠിക്കുക",
+  "എഴുതുക",
+  "വായിക്കുക",
+  "സുഖം",
+  "സുഖമാണോ",
+  "സുഖമാണ്",
+  "നമസ്കാരം",
+];
+
+const SUPPLEMENTARY_FREQUENCY = 150;
+
+registerLexiconEntries(
+  [
+    ...SUPPLEMENTARY_WORDS,
+    ...loanwordMalayalamSpellings(),
+    ...Object.values(MANGLISH_TO_MALAYALAM_MAP).flat(),
+  ].map((malayalam) => ({ malayalam, frequency: SUPPLEMENTARY_FREQUENCY })),
+);
+
+/** Weight of one unit of phonetic cost against the lexicon frequency boost. */
+export const PHONETIC_COST_WEIGHT = 40;
+
+/**
+ * Ranked Malayalam spellings for a Manglish word from the phonetic rules,
+ * scored against the lexicon: higher is better.
+ */
+export function phoneticMalayalamCandidates(
+  word: string,
+  limit = 12,
+): Array<{ text: string; cost: number; score: number }> {
+  // With a loaded lexicon, generate widely and let attested words float up.
+  const guided = lexiconSize() > 0;
+  return generateMalayalamSpellings(word, {
+    limit: guided ? 64 : limit,
+    ...(guided ? { isKnownPrefix: isLexiconPrefix } : {}),
+  })
+    .map(({ text, cost }) => ({
+      text,
+      cost,
+      score: lexiconBoost(text) - cost * PHONETIC_COST_WEIGHT,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
+
+/** Known-word Malayalam prefixes for an unfinished Manglish word, for completion. */
+export function openMalayalamPrefixes(word: string, limit = 3): string[] {
+  if (lexiconSize() === 0) return [];
+  return generateMalayalamSpellings(word, {
+    limit: limit * 4,
+    open: true,
+    isKnownPrefix: isLexiconPrefix,
+  })
+    .filter(({ text }) => isLexiconPrefix(text))
+    .slice(0, limit)
+    .map(({ text }) => text);
+}
+
+/** Convert a Manglish word into Malayalam candidates, best first. */
 export function manglishToMalayalam(word: string): string[] {
-  const raw = word.trim();
-  const normalized = raw.toLowerCase();
+  const normalized = word
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z]/g, "");
   if (!normalized) return [];
 
-  // Preserve meaningful internal capitals (L/N/T/D), but treat an initial
-  // capital as ordinary sentence casing: `Njangalkk` behaves like `njangalkk`.
-  const fallbackText = raw[0]!.toLowerCase() + raw.slice(1);
-
-  const results: string[] = [];
-  const seen = new Set<string>();
-
-  const add = (w: string) => {
-    const t = w.trim();
-    // Some engines return half-transliterated strings such as `eങne`.
-    if (t && !/[A-Za-z]/.test(t) && !seen.has(t)) {
-      seen.add(t);
-      results.push(t);
-    }
-  };
-
-  // 1. Exact dictionary matches
-  if (MANGLISH_TO_MALAYALAM_MAP[normalized]) {
-    for (const w of MANGLISH_TO_MALAYALAM_MAP[normalized]!) {
-      add(w);
-    }
-  }
-
-  // 2. Tanglish engine suggestions & transliterations
-  if (manglishEngine) {
-    try {
-      const suggestions = manglishEngine.getSuggestions(normalized, 4);
-      if (Array.isArray(suggestions)) {
-        for (const s of suggestions) {
-          if (s?.output) add(s.output);
-        }
-      }
-      const direct = manglishEngine.transliterate(normalized);
-      if (direct) add(direct);
-    } catch {
-      // safe fallback
-    }
-  }
-
-  // 3. Rule-based phonetic transliteration fallback
-  let out = "";
-  let i = 0;
-  const len = fallbackText.length;
-
-  while (i < len) {
-    const rest = fallbackText.slice(i);
-
-    // Initial independent vowel
-    if (i === 0) {
-      const vMatch = INDEP_VOWEL.find(([v]) => rest.startsWith(v));
-      if (vMatch) {
-        out += vMatch[1];
-        i += vMatch[0].length;
-        continue;
-      }
-    }
-
-    // Chillu at end of word
-    if (i === len - 1 && CHILLU_MAP[fallbackText[i]!]) {
-      out += CHILLU_MAP[fallbackText[i]!]!;
-      i += 1;
-      continue;
-    }
-
-    // Consonant match
-    const cMatch = CONS_MAP.find(([c]) => rest.startsWith(c));
-    if (cMatch) {
-      const consChar = cMatch[1];
-      i += cMatch[0].length;
-      const after = fallbackText.slice(i);
-
-      // Followed by vowel
-      const vMatch = VOWEL_MATRA.find(([v]) => after.startsWith(v));
-      if (vMatch) {
-        out += consChar + vMatch[1];
-        i += vMatch[0].length;
-      } else {
-        // Pure consonant with virama (chandrakkala)
-        if (i === len && CHILLU_MAP[cMatch[0]]) {
-          out += CHILLU_MAP[cMatch[0]]!;
-        } else {
-          out += consChar + "്";
-        }
-      }
-      continue;
-    }
-
-    // Vowel in middle
-    const vMatch = INDEP_VOWEL.find(([v]) => rest.startsWith(v));
-    if (vMatch) {
-      out += vMatch[1];
-      i += vMatch[0].length;
-      continue;
-    }
-
-    out += fallbackText[i];
-    i += 1;
-  }
-
-  if (out) add(out);
-
-  return results;
-}
-
-// Classical and standard Arabi-Malayalam vocabulary mappings
-// Classical and standard Arabi-Malayalam vocabulary mappings (supporting 'o' with ٗ like 'e' with ٘)
-export const ARABI_MALAYALAM_VOCABULARY: Record<string, string[]> = {
-  njan: ["ݧان", "ڿانْ", "نجان"],
-  njaan: ["ݧان", "ڿانْ", "نجان"],
-  ningal: ["نِڹڰَڶ", "نِڠَݵ"],
-  enikku: ["ا٘نِكُّ", "اِنِكُّ", "يِنِكُّ"],
-  ente: ["ا٘نْت٘", "ا٘نْڔِ", "اِينْتِي"],
-  entha: ["ا٘نْتھَا", "اِينْدَا"],
-  evide: ["ا٘وِد٘", "اِوِد٘", "اِيوِڈِي"],
-  sukhamanu: ["سُكھَمَاڹ", "سُكَمَاڹُ"],
-  sukham: ["سُكھَمْ", "سُكَمْ"],
-  sukhamano: ["سُكھَمَانٗو", "سُكھَمَانُو", "سُكھَمَاڹٗو", "سُكَمَانُو"],
-  vellam: ["و٘ڶَّم", "وَيڶَّم", "وِڶَّم", "و٘ۻَّم"],
-  veedu: ["وِيڈ", "وِيڈُ"],
-  veettil: ["وِيٹِّيلْ"],
-  nanni: ["نَنِّي"],
-  salam: ["سَلَام", "السَّلَام"],
-  salaam: ["سَلَام", "السَّلَام"],
-  namaskaram: ["نَمَسْكَارَم"],
-  allah: ["اللّٰه", "اَللّٰهْ"],
-  allahu: ["اللّٰه", "اَللّٰهُ"],
-  kithab: ["كِتَاب", "كِتَابُكَيڶ"],
-  madrasa: ["مَدْرَسَة"],
-  paatam: ["پَاٹَم"],
-  amma: ["اَمَّا", "اُمَّا"],
-  uppa: ["اُپَّا"],
-  nalla: ["نَلَّ", "نَلَّتْ"],
-  onnu: ["اٗنُّ", "اٗنَّْ", "اُونُّ", "اُنُّ"],
-  oru: ["اٗرُ", "اٗڔُ", "اُورُ", "اُرُ"],
-  oro: ["اٗرٗو", "اٗوڔٗو", "اٗورٗو", "اُورُو"],
-  randu: ["رَنْڈ", "رَنْڈَامَتْ"],
-  moonnu: ["مُونُّ"],
-  naalu: ["نَالُ"],
-  anju: ["اَنْجُ"],
-  ippol: ["اِپَّٗڶ", "اِپَّوڶ", "اِپّوڶ", "اِپَّوۻ"],
-  appol: ["اَپَّٗڶ", "اَپَّوڶ", "اَپَّوۻ"],
-  vannu: ["وَنُّ"],
-  poyi: ["پٗويِ", "پٗویِ", "پَويِ", "پُویِ"],
-  kazhicho: ["كَژِچّٗو", "كَژِچُّو", "كَيِچّو"],
-  nokku: ["نٗوكُّ", "نُوڪُّ", "نٗوكُو"],
-  kollam: ["كٗوڶَّم", "كٗوۻَّام", "كُوڶَّم"],
-  chollu: ["چٗوڶُّ", "چٗوۻّ", "چُوڶُّ"],
-  ponnu: ["پٗوڹُّ", "پُوڹُّ", "پٗونُّ"],
-  chothichu: ["چٗودِچُّ", "چُودِچُّ"],
-  pokuka: ["پٗوكُكَ", "پُوڪُكَ"],
-  engottu: ["ا٘ڹْڰٗوٹُّ", "اِنْڰُوٹُّ"],
-  ingottu: ["اِنْڰٗوٹُّ", "اِنْڰُوٹُّ"],
-  angottu: ["اَنْڰٗوٹُّ", "اَنْڰُوٹُّ"],
-  avanod: ["اَوَنٗوڈْ", "اَوَنُوڈْ"],
-  ennodu: ["ا٘نَّٗوڈُ", "اِنَّٗوڈُ"],
-  entho: ["ا٘نْتھٗو", "اِنْتھُو"],
-  cheyyunnu: ["چَييُّنُّ"],
-  cheythu: ["چَيْدُ", "چَيْتُ"],
-  pusthakam: ["پُسْتَكَم"],
-  kutty: ["كُٹِّي"],
-  kutti: ["كُٹِّي"],
-  malayalam: ["مَلَيَاڶَم", "مَلَیاۻم"],
-  keralam: ["ک٘یرَڶَم", "كِيرَڶَم", "كيرَڶَم", "كيرَۻَم"],
-  sthalam: ["سْتَڶَم", "سْتَۻَم"],
-  samayam: ["سَمَيَم"],
-  ariyaam: ["اَرِيَام"],
-  ariyilla: ["اَرِييِلَّ"],
-  vaayikkuka: ["وَايِكُّكَ"],
-  ezhuthuka: ["اِيژُوتُّكَ"],
-  hello: ["حَلُو", "هَلُو"],
-};
-
-// Malayalam to Arabi-Malayalam vocabulary mappings (supporting 'o' with ٗ like 'e' with ٘)
-export const MALAYALAM_TO_ARABI_VOCABULARY: Record<string, string[]> = {
-  "ഞാൻ": ["ݧان", "ڿانْ", "نجان"],
-  "നിങ്ങൾ": ["نِڹڰَڶ", "نِڠَݵ"],
-  "എനിക്ക്": ["ا٘نِكُّ", "اِنِكُّ", "يِنِكُّ"],
-  "എന്റെ": ["ا٘نْت٘", "ا٘نْڔِ", "اِينْتِي"],
-  "എന്താണ്": ["ا٘نْتھَاڹ", "اِينْدَاڹ"],
-  "എന്താ": ["ا٘نْتھَا", "اِينْدَا"],
-  "എവിടെ": ["ا٘وِد٘", "اِوِد٘", "اِيوِڈِي"],
-  "സുഖമാണ്": ["سُكھَمَاڹ", "سُكَمَاڹُ"],
-  "സുഖം": ["سُكھَمْ", "سُكَمْ"],
-  "സുഖമാണോ": ["سُكھَمَانٗو", "سُكھَمَانُو", "سُكھَمَاڹٗو", "سُكَمَانُو"],
-  "വെള്ളം": ["و٘ڶَّم", "وَيڶَّم", "وِڶَّم", "و٘ۻَّم"],
-  "വീട്": ["وِيڈ", "وِيڈُ"],
-  "വീട്ടിൽ": ["وِيٹِّيلْ"],
-  "നന്ദി": ["نَنِّي"],
-  "സലാം": ["سَلَام", "السَّلَام", "سَلام"],
-  "നമസ്കാരം": ["نَمَسْكَارَم"],
-  "അല്ലാഹു": ["اللّٰه", "اَللّٰهْ", "اللّٰهُ"],
-  "കിതാബ്": ["كِتَاب", "كِتَابُكَيڶ"],
-  "മദ്രസ": ["مَدْرَسَة"],
-  "പാഠം": ["پَاٹَم"],
-  "അമ്മ": ["اَمَّا", "اُمَّا"],
-  "ഉപ്പ": ["اُپَّا"],
-  "നല്ല": ["نَلَّ", "نَلَّتْ"],
-  "ഒന്ന്": ["اٗنُّ", "اٗنَّْ", "اُونُّ", "اُنُّ"],
-  "ഒരു": ["اٗرُ", "اٗڔُ", "اُورُ", "اُرُ"],
-  "ഓരോ": ["اٗرٗو", "اٗوڔٗو", "اٗورٗو", "اُورُو"],
-  "രണ്ട്": ["رَنْڈ", "رَنْڈَامَتْ"],
-  "മൂന്ന്": ["مُونُّ"],
-  "നാല്": ["نَالُ"],
-  "അഞ്ച്": ["اَنْجُ"],
-  "ഇപ്പോൾ": ["اِپَّٗڶ", "اِپَّوڶ", "اِپّوڶ", "اِپَّوۻ"],
-  "അപ്പോൾ": ["اَپَّٗڶ", "اَپَّوڶ", "اَپَّوۻ"],
-  "വന്നു": ["وَنُّ"],
-  "പോയി": ["پٗويِ", "پٗویِ", "پَويِ", "پُویِ"],
-  "കഴിച്ചോ": ["كَژِچّٗو", "كَژِچُّو", "كَيِچّو"],
-  "നോക്കൂ": ["نٗوكُّ", "نُوڪُّ", "نٗوكُو"],
-  "കൊള്ളാം": ["كٗوڶَّم", "كٗوۻَّام", "كُوڶَّم"],
-  "ചൊല്ല്": ["چٗوڶُّ", "چٗوۻّ", "چُوڶُّ"],
-  "പൊന്ന്": ["پٗوڹُّ", "پُوڹُّ", "پٗونُّ"],
-  "ചോദിച്ചു": ["چٗودِچُّ", "چُودِچُّ"],
-  "പോകുക": ["پٗوكُكَ", "پُوڪُكَ"],
-  "എങ്ങോട്ട്": ["ا٘ڹْڰٗوٹُّ", "اِنْڰُوٹُّ"],
-  "ഇങ്ങോട്ട്": ["اِنْڰٗوٹُّ", "اِنْڰُوٹُّ"],
-  "അങ്ങോട്ട്": ["اَنْڰٗوٹُّ", "اَنْڰُوٹُّ"],
-  "അവനോട്": ["اَوَنٗوڈْ", "اَوَنُوڈْ"],
-  "എന്നോട്": ["ا٘نَّٗوڈُ", "اِنَّٗوڈُ"],
-  "എന്തോ": ["ا٘نْتھٗو", "اِنْتھُو"],
-  "ചെയ്യുന്നു": ["چَييُّنُّ"],
-  "ചെയ്തു": ["چَيْدُ", "چَيْتُ"],
-  "പുസ്തകം": ["پُسْتَكَم"],
-  "കുട്ടി": ["كُٹِّي"],
-  "മലയാളം": ["مَلَيَاڶَم", "مَلَیاۻم"],
-  "കേരളം": ["ک٘یرَڶَم", "كِيرَڶَم", "كيرَڶَم", "كيرَۻَم"],
-  "സ്ഥലം": ["سْتَڶَم", "سْتَۻَم"],
-  "സമയം": ["سَمَيَم"],
-  "അറിയാം": ["اَرِيَام"],
-  "അറിയില്ല": ["اَرِييِلَّ"],
-  "വായിക്കുക": ["وَايِكُّكَ"],
-  "എഴുതുക": ["اِيژُوتُّكَ"],
-  "ഹലോ": ["حَلُو", "هَلُو"],
-};
-
-// Arabic to Arabi-Malayalam vocabulary and vocalization mappings
-export const ARABIC_TO_ARABI_MALAYALAM_VOCABULARY: Record<string, string[]> = {
-  "سلام": ["سَلَام", "السَّلَام", "سَلاَمْ"],
-  "كتاب": ["كِتَاب", "الكِتَاب", "كِتَابُكَيڶ"],
-  "الله": ["اللّٰه", "اَللّٰهْ", "اللّٰهُ"],
-  "محمد": ["مُحَمَّد", "مُحَمَّدٌ", "مُحَمَّدْ"],
-  "قران": ["قُرْآن", "القُرْآن", "قُرْآنْ"],
-  "قرآن": ["قُرْآن", "القُرْآن", "قُرْآنْ"],
-  "صلاة": ["صَلَاة", "الصَّلَاة", "صَلَوَات"],
-  "مسجد": ["مَسْجِد", "المَسْجِد"],
-  "علم": ["عِلْم", "العِلْم"],
-  "طالب": ["طَالِب", "طَالِبٌ"],
-  "استاذ": ["أُسْتَاذ", "اُسْتَاذْ"],
-  "مدرسة": ["مَدْرَسَة", "المَدْرَسَة"],
-  "دعاء": ["دُعَاء", "الدُّعَاء"],
-  "نور": ["نُور", "النُّور"],
-  "حق": ["حَقّ", "الحَقّ"],
-  "صبر": ["صَبْر", "الصَّبْر"],
-  "شكر": ["شُكْر", "الشُّكْر"],
-  "رمضان": ["رَمَضَان", "رَمَضَانْ"],
-  "عيد": ["عِيد", "العِيد"],
-  "جمعة": ["جُمُعَة", "الجُمُعَة"],
-  "حديث": ["حَدِيث", "الحَدِيث"],
-  "فقه": ["فِقْه", "الفِقْه"],
-  "توبة": ["تَوْبَة"],
-  "استغفار": ["اِسْتِغْفَار"],
-  "مكة": ["مَكَّة", "مَكَّةُ المُكَرَّمَة"],
-  "مدينة": ["مَدِينَة", "المَدِينَةُ المُنَوَّرَة"],
-  "جنة": ["جَنَّة", "الجَنَّة"],
-  "جهنم": ["جَهَنَّم"],
-  "ايمان": ["إِيمَان", "الإِيمَان"],
-  "اسلام": ["إِسْلَام", "الإِسْلَام"],
-  "احسان": ["إِحْسَان"],
-  "رسول": ["رَسُول", "الرَّسُول"],
-  "نبي": ["نَبِيّ", "النَّبِيّ"],
-  "شيخ": ["شَيْخ", "الشَّيْخ"],
-  "بيت": ["بَيْت", "البَيْت"],
-  "قلب": ["قَلْب", "القَلْب"],
-  "روح": ["رُوح", "الرُّوح"],
-  "دنيا": ["دُنْيَا", "الدُّنْيَا"],
-  "بركة": ["بَرَكَة", "بَرَكَات"],
-  "رحمة": ["رَحْمَة", "رَحْمَةُ اللّٰه"],
-};
-
-export interface TransliterationCandidate {
-  arabi: string;
-  malayalam: string;
-  score: number;
+  const results = new Set<string>(MANGLISH_TO_MALAYALAM_MAP[normalized] ?? []);
+  for (const { text } of phoneticMalayalamCandidates(word, 6)) results.add(text);
+  return [...results];
 }
 
 /**
- * Strips Arabic harakat/tashkeel diacritics for clean base lookup
- */
-export function stripArabicDiacritics(text: string): string {
-  return text.replace(/[\u064B-\u065F\u0670]/g, "");
-}
-
-/**
- * Classical Arabi-Malayalam transliteration engine supporting
- * "o" (inverted damma ٗ U+0657) like "e" (small v ٘ U+0658),
- * full chillaksharam, and authentic Arabi-Malayalam consonants.
+ * Arabi-Malayalam spellings for a Malayalam word: the inverted-damma (ٗ)
+ * spelling of o/oo first, then the plain-damma variant when it differs.
  */
 export function convertMalayalamToArabiMalayalam(ml: string): string[] {
   const primary = transliterateMalayalamToArabic(ml);
   const standardOVariant = withStandardOMarks(primary);
+  return standardOVariant === primary ? [primary] : [primary, standardOVariant];
+}
 
-  const results = [primary];
-  if (standardOVariant !== primary) {
-    results.push(standardOVariant);
-  }
-  return results;
+// Unvocalized Arabic -> fully vocalized spelling for Arabic typed directly.
+export const ARABIC_TO_ARABI_MALAYALAM_VOCABULARY: Record<string, string[]> = {
+  سلام: ["سَلَام", "السَّلَام"],
+  كتاب: ["كِتَاب", "الكِتَاب"],
+  الله: ["اللّٰه", "اللّٰهُ"],
+  محمد: ["مُحَمَّد"],
+  قران: ["قُرْآن", "القُرْآن"],
+  قرآن: ["قُرْآن", "القُرْآن"],
+  صلاة: ["صَلَاة", "الصَّلَاة", "صَلَوَات"],
+  مسجد: ["مَسْجِد", "المَسْجِد"],
+  علم: ["عِلْم", "العِلْم"],
+  طالب: ["طَالِب"],
+  استاذ: ["أُسْتَاذ"],
+  مدرسة: ["مَدْرَسَة", "المَدْرَسَة"],
+  دعاء: ["دُعَاء", "الدُّعَاء"],
+  نور: ["نُور", "النُّور"],
+  حق: ["حَقّ", "الحَقّ"],
+  صبر: ["صَبْر", "الصَّبْر"],
+  شكر: ["شُكْر", "الشُّكْر"],
+  رمضان: ["رَمَضَان"],
+  عيد: ["عِيد", "العِيد"],
+  جمعة: ["جُمُعَة", "الجُمُعَة"],
+  حديث: ["حَدِيث", "الحَدِيث"],
+  فقه: ["فِقْه", "الفِقْه"],
+  توبة: ["تَوْبَة"],
+  استغفار: ["اِسْتِغْفَار"],
+  مكة: ["مَكَّة", "مَكَّةُ المُكَرَّمَة"],
+  مدينة: ["مَدِينَة", "المَدِينَةُ المُنَوَّرَة"],
+  جنة: ["جَنَّة", "الجَنَّة"],
+  جهنم: ["جَهَنَّم"],
+  ايمان: ["إِيمَان", "الإِيمَان"],
+  اسلام: ["إِسْلَام", "الإِسْلَام"],
+  احسان: ["إِحْسَان"],
+  رسول: ["رَسُول", "الرَّسُول"],
+  نبي: ["نَبِيّ", "النَّبِيّ"],
+  شيخ: ["شَيْخ", "الشَّيْخ"],
+  بيت: ["بَيْت", "البَيْت"],
+  قلب: ["قَلْب", "القَلْب"],
+  روح: ["رُوح", "الرُّوح"],
+  دنيا: ["دُنْيَا", "الدُّنْيَا"],
+  بركة: ["بَرَكَة", "بَرَكَات"],
+  رحمة: ["رَحْمَة", "رَحْمَةُ اللّٰه"],
+};
+
+/** Strips Arabic harakat/tashkeel diacritics for clean base lookup. */
+export function stripArabicDiacritics(text: string): string {
+  return text.replace(/[ً-ٰٟ]/g, "");
 }
 
 /**
- * Generate high-accuracy Arabi-Malayalam candidates for an input word:
- * 1. English to Arabi-Malayalam (Roman / Manglish phonetics -> ArabiMalayalam)
- * 2. Malayalam to Arabi-Malayalam (Malayalam script -> ArabiMalayalam)
- * 3. Arabic to Arabi-Malayalam (Standard Arabic -> ArabiMalayalam orthography)
- * In ALL cases, all suggestions are pure Arabi-Malayalam, and the LAST suggestion is always the typed text.
+ * Candidates for Arabic typed directly: vocalized dictionary spellings, then
+ * the text exactly as typed. Arabic needs no letter conversion.
  */
-export function getTransliterationCandidates(
-  word: string,
-  mode: "english" | "malayalam" | "arabic" | "arabi" = "english",
-): Array<{ text: string }> {
+export function arabicInputCandidates(word: string): string[] {
   const trimmed = word.trim();
   if (!trimmed) return [];
-
-  const candidates: Array<{ text: string }> = [];
-  const seen = new Set<string>();
-
-  const isMalayalamInput = /[\u0D00-\u0D7F]/.test(trimmed);
-  const isArabicInput = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(trimmed);
-
-  // 1. ARABIC TO ARABI-MALAYALAM
-  if (isArabicInput || mode === "arabic") {
-    const unvocalized = stripArabicDiacritics(trimmed);
-
-    // Check direct dictionary
-    if (ARABIC_TO_ARABI_MALAYALAM_VOCABULARY[trimmed]) {
-      for (const ar of ARABIC_TO_ARABI_MALAYALAM_VOCABULARY[trimmed]!) {
-        if (!seen.has(ar) && ar !== trimmed) {
-          candidates.push({ text: ar });
-          seen.add(ar);
-        }
-      }
-    }
-    if (ARABIC_TO_ARABI_MALAYALAM_VOCABULARY[unvocalized]) {
-      for (const ar of ARABIC_TO_ARABI_MALAYALAM_VOCABULARY[unvocalized]!) {
-        if (!seen.has(ar) && ar !== trimmed) {
-          candidates.push({ text: ar });
-          seen.add(ar);
-        }
-      }
-    }
-
-    // Arabi-Malayalam phonetic adaptations for Arabic characters:
-    // (e.g. ج -> چ, ك -> ڰ, ل -> ڶ, ن -> ڹ, etc.)
-    const arabiMalayalamVariation = trimmed
-      .replace(/ك/g, "ڰ")
-      .replace(/ج/g, "چ");
-    if (arabiMalayalamVariation !== trimmed && !seen.has(arabiMalayalamVariation)) {
-      candidates.push({ text: arabiMalayalamVariation });
-      seen.add(arabiMalayalamVariation);
-    }
-
-    const finalCandidates = candidates.slice(0, 5);
-    finalCandidates.push({ text: trimmed });
-    return finalCandidates;
-  }
-
-  // 2. MALAYALAM TO ARABI-MALAYALAM
-  if (isMalayalamInput || mode === "malayalam") {
-    // Check direct Malayalam vocabulary
-    if (MALAYALAM_TO_ARABI_VOCABULARY[trimmed]) {
-      for (const ar of MALAYALAM_TO_ARABI_VOCABULARY[trimmed]!) {
-        if (!seen.has(ar)) {
-          candidates.push({ text: ar });
-          seen.add(ar);
-        }
-      }
-    }
-
-    // Convert via dedicated Arabi-Malayalam engine supporting 'o' like 'e'
-    const customArabiList = convertMalayalamToArabiMalayalam(trimmed);
-    for (const ar of customArabiList) {
-      if (!seen.has(ar) && ar !== trimmed) {
-        candidates.push({ text: ar });
-        seen.add(ar);
-      }
-    }
-
-    // Also include transliterateToArabic library output
-    const arabiResult = transliterateToArabic(trimmed);
-    if (arabiResult && !seen.has(arabiResult) && arabiResult !== trimmed) {
-      candidates.push({ text: arabiResult });
-      seen.add(arabiResult);
-    }
-
-    const finalCandidates = candidates.slice(0, 5);
-    finalCandidates.push({ text: trimmed });
-    return finalCandidates;
-  }
-
-  // 3. ENGLISH TO ARABI-MALAYALAM (Roman phonetics e.g. "njan", "salam", "onnu", "poyi")
-  const normalized = trimmed.toLowerCase();
-
-  // 3a. Direct English-to-ArabiMalayalam dictionary matches
-  if (ARABI_MALAYALAM_VOCABULARY[normalized]) {
-    for (const ar of ARABI_MALAYALAM_VOCABULARY[normalized]!) {
-      if (!seen.has(ar)) {
-        candidates.push({ text: ar });
-        seen.add(ar);
-      }
-    }
-  }
-
-  // 3b. Phonetic Malayalam candidates converted to Arabi-Malayalam
-  const mlList = manglishToMalayalam(trimmed);
-  for (const ml of mlList) {
-    if (MALAYALAM_TO_ARABI_VOCABULARY[ml]) {
-      for (const ar of MALAYALAM_TO_ARABI_VOCABULARY[ml]!) {
-        if (!seen.has(ar)) {
-          candidates.push({ text: ar });
-          seen.add(ar);
-        }
-      }
-    }
-    const customArabiList = convertMalayalamToArabiMalayalam(ml);
-    for (const ar of customArabiList) {
-      if (!seen.has(ar)) {
-        candidates.push({ text: ar });
-        seen.add(ar);
-      }
-    }
-    const arabi = transliterateToArabic(ml);
-    if (arabi && !seen.has(arabi)) {
-      candidates.push({ text: arabi });
-      seen.add(arabi);
-    }
-  }
-
-  // Keep up to 5 candidates, and the LAST suggestion is ALWAYS the typed text
-  const finalCandidates = candidates.slice(0, 5);
-  finalCandidates.push({ text: trimmed });
-
-  return finalCandidates;
-}
-
-/**
- * Convert a pasted word, sentence, or paragraph in one pass. Malayalam is
- * converted as a complete string so phrase overrides and combining marks are
- * retained. Roman/Manglish words are converted independently while URLs,
- * email addresses, Arabic text, whitespace, and punctuation are preserved.
- */
-export function transliteratePastedText(text: string): string {
-  const withMalayalamConverted = transliterateMalayalamToArabic(text);
-  const tokenPattern =
-    /https?:\/\/\S+|www\.\S+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|[A-Za-z]+(?:['’][A-Za-z]+)*/g;
-
-  return withMalayalamConverted.replace(tokenPattern, (token) => {
-    if (/^(?:https?:\/\/|www\.)/i.test(token) || token.includes("@")) {
-      return token;
-    }
-
-    const candidates = getTransliterationCandidates(token, "english");
-    return (
-      candidates.find(({ text: candidate }) =>
-        /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/u.test(candidate),
-      )?.text ?? token
-    );
-  });
+  const vocalized =
+    ARABIC_TO_ARABI_MALAYALAM_VOCABULARY[trimmed] ??
+    ARABIC_TO_ARABI_MALAYALAM_VOCABULARY[stripArabicDiacritics(trimmed)] ??
+    [];
+  return [...new Set([...vocalized.filter((text) => text !== trimmed), trimmed])];
 }

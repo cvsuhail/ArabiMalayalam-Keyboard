@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   Plus,
   Copy,
@@ -62,8 +63,10 @@ const FONT_FAMILIES = [
   {
     id: "aref-ruqaa",
     name: "Aref Ruqaa",
-    font: "'Aref Ruqaa', serif",
+    // Has no ڿ ۼ ڊ ڗ ڹ ۻ ۺ ڔ; those letters come from Noto Naskh Arabic.
+    font: "'Aref Ruqaa', 'Noto Naskh Arabic', serif",
     googleQuery: "Aref+Ruqaa:wght@400;700",
+    fallbackId: "noto-naskh",
   },
   {
     id: "noto-sans-ar",
@@ -74,8 +77,10 @@ const FONT_FAMILIES = [
   {
     id: "reem-kufi",
     name: "Reem Kufi",
-    font: "'Reem Kufi', sans-serif",
+    // Has no ڿ ۼ ڊ ڗ ڹ ۻ ۺ ڔ or the e/o marks; those come from Noto Naskh Arabic.
+    font: "'Reem Kufi', 'Noto Naskh Arabic', sans-serif",
     googleQuery: "Reem+Kufi:wght@400;500;600;700",
+    fallbackId: "noto-naskh",
   },
   {
     id: "harmattan",
@@ -131,12 +136,26 @@ async function loadSmartEngine() {
   const engine = await smartEnginePromise;
   if (!smartEngineConfigured) {
     engine.loadUserPreferences();
+    // The word list ranks suggestions; typing works (phonetically) until it arrives.
+    void engine.loadLexicon();
     const endpoint = import.meta.env["VITE_MALAYALAM_TRANSLITERATION_ENDPOINT"];
     engine.setMalayalamProvider(endpoint ? engine.createHttpMalayalamProvider(endpoint) : null);
     smartEngineConfigured = true;
   }
   return engine;
 }
+
+/**
+ * Suggestions per word: nine candidates plus the typed text. Many Manglish
+ * spellings fit several words, so the list has room for the one the user meant.
+ * Keys 1–9 and 0 pick them.
+ */
+const SUGGESTION_COUNT = 10;
+const SHORTCUT_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+
+/** Typing one of these right after a word commits the word's top suggestion. */
+const COMMIT_CHARACTER = /^[\s.,!?;:)\]}"”…،؟]$/u;
+const ARABIC_SCRIPT = /[؀-ۿݐ-ݿࢠ-ࣿ]/u;
 
 const loadDocumentStore = () => import("../lib/db/documents");
 
@@ -148,9 +167,11 @@ function deriveTitle(plainText: string): string {
 }
 
 function loadFont(font: FontChoice): void {
-  if (typeof document === "undefined" || document.querySelector(`[data-app-font="${font.id}"]`)) {
-    return;
-  }
+  if (typeof document === "undefined") return;
+  // A font missing Arabi-Malayalam letters names the font they fall back to.
+  const fallback = FONT_FAMILIES.find((f) => f.id === font.fallbackId);
+  if (fallback) loadFont(fallback);
+  if (document.querySelector(`[data-app-font="${font.id}"]`)) return;
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet";
   stylesheet.href = `https://fonts.googleapis.com/css2?family=${font.googleQuery}&display=swap`;
@@ -212,6 +233,8 @@ function ArabiMalayalamEditor() {
   const [currentWord, setCurrentWord] = useState<string>("");
   const [wordRange, setWordRange] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
   const [suggestions, setSuggestions] = useState<SmartCandidate[]>([]);
+  // The word `suggestions` were computed for; they can lag behind fast typing.
+  const [suggestionsWord, setSuggestionsWord] = useState<string>("");
   const [activeSuggestionIdx, setActiveSuggestionIdx] = useState<number>(0);
   const [suggestionPos, setSuggestionPos] = useState<{ top: number; left: number } | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -246,6 +269,30 @@ function ArabiMalayalamEditor() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const previousMalayalamRef = useRef<string | undefined>(undefined);
+  // Latest text for long-lived callbacks (speech recognition) that outlive a render.
+  const textRef = useRef(text);
+  textRef.current = text;
+
+  // Caret position to restore once a programmatic text change reaches the DOM.
+  // A layout effect runs before the next keystroke is handled, unlike a timer.
+  const pendingCaretRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const caret = pendingCaretRef.current;
+    if (caret === null || !textareaRef.current) return;
+    pendingCaretRef.current = null;
+    textareaRef.current.setSelectionRange(caret, caret);
+  }, [text]);
+
+  // Warm up the transliteration engine and word list before the first keystroke.
+  useEffect(() => {
+    const warmUp = () => void loadSmartEngine();
+    if (typeof window.requestIdleCallback === "function") {
+      const handle = window.requestIdleCallback(warmUp, { timeout: 2000 });
+      return () => window.cancelIdleCallback(handle);
+    }
+    const timeout = window.setTimeout(warmUp, 300);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -331,11 +378,12 @@ function ArabiMalayalamEditor() {
         const previousMalayalam = previousMalayalamRef.current;
         const candidates = await getSmartTransliterationCandidates(
           currentWord,
-          6,
+          SUGGESTION_COUNT,
           previousMalayalam ? { previousMalayalam } : {},
         );
         if (cancelled) return;
         setSuggestions(candidates);
+        setSuggestionsWord(currentWord);
         setActiveSuggestionIdx(0);
 
         // Compute pixel coordinates relative to the white paper canvas
@@ -356,12 +404,12 @@ function ArabiMalayalamEditor() {
 
           if (isRtl) {
             // In RTL mode, align the dropdown to sit nicely beneath the right-aligned word
-            relLeft = relLeft - 180;
+            relLeft = relLeft - 196;
           }
 
-          // Ensure dropdown doesn't overflow the paper boundary
+          // Ensure dropdown (w-56 = 224px) doesn't overflow the paper boundary
           const minLeft = 16;
-          const maxLeft = Math.max(16, paperRect.width - 210);
+          const maxLeft = Math.max(16, paperRect.width - 240);
           relLeft = Math.max(minLeft, Math.min(maxLeft, relLeft));
 
           setSuggestionPos({ top: relTop, left: relLeft });
@@ -379,6 +427,31 @@ function ArabiMalayalamEditor() {
     };
   }, [currentWord, wordRange.start, textAlign]);
 
+  // Keep the highlighted suggestion visible inside the scrollable list. Only the
+  // list scrolls; scrollIntoView would also move the page on phones.
+  const suggestionListRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const list = suggestionListRef.current;
+    const option = list?.querySelector<HTMLElement>(
+      `#transliteration-suggestion-${activeSuggestionIdx}`,
+    );
+    if (!list || !option) return;
+    if (option.offsetTop < list.scrollTop) {
+      list.scrollTop = option.offsetTop;
+    } else if (option.offsetTop + option.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = option.offsetTop + option.offsetHeight - list.clientHeight;
+    }
+  }, [activeSuggestionIdx, suggestions]);
+
+  const rememberChoice = (typedWord: string, suggestion: SmartCandidate) => {
+    if (!suggestion.malayalam || suggestion.source === "typed") return;
+    const malayalam = suggestion.malayalam;
+    void loadSmartEngine().then(({ learnSelection }) => {
+      learnSelection(typedWord, malayalam, suggestion.text);
+    });
+    previousMalayalamRef.current = malayalam;
+  };
+
   // Insert chosen suggestion into text
   const applySuggestion = (suggestion: SmartCandidate) => {
     if (!textareaRef.current) return;
@@ -391,28 +464,24 @@ function ArabiMalayalamEditor() {
 
     setHistoryStack((prev) => appendHistory(prev, updated));
     setRedoStack([]);
+    rememberChoice(currentWord, suggestion);
 
-    if (suggestion.malayalam) {
-      void loadSmartEngine().then(({ learnSelection }) => {
-        learnSelection(currentWord, suggestion.malayalam!);
-      });
-      previousMalayalamRef.current = suggestion.malayalam;
-    }
-
+    pendingCaretRef.current = newPos;
     setText(updated);
     setCurrentWord("");
     setSuggestions([]);
     setSuggestionPos(null);
     triggerAutoSave(updated, title);
-
-    setTimeout(() => {
-      el.focus();
-      el.setSelectionRange(newPos, newPos);
-    }, 10);
+    el.focus();
   };
 
   // Keyboard navigation for suggestions dropdown
-  const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Suggestions may still belong to an earlier prefix of the word (e.g. "nja"
+    // while "njan" is typed). Then committing keys fall through and the change
+    // handler commits the current word with fresh candidates.
+    const fresh = suggestions.length > 0 && suggestionsWord === currentWord;
+
     if (suggestions.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -424,25 +493,23 @@ function ArabiMalayalamEditor() {
         setActiveSuggestionIdx((prev) => (prev - 1 + suggestions.length) % suggestions.length);
         return;
       }
-      if (e.key === "Enter") {
+      if (e.key === "Enter" && fresh) {
         e.preventDefault();
         const target = suggestions[activeSuggestionIdx];
         if (target) applySuggestion(target);
         return;
       }
-      if (e.key === " ") {
+      if (e.key === " " && fresh) {
         e.preventDefault();
         const target = suggestions[activeSuggestionIdx] || suggestions[0];
         if (target) applySuggestion(target);
         return;
       }
-      if (["1", "2", "3", "4", "5", "6"].includes(e.key)) {
-        const num = parseInt(e.key, 10) - 1;
-        if (suggestions[num]) {
-          e.preventDefault();
-          applySuggestion(suggestions[num]!);
-          return;
-        }
+      const shortcut = SHORTCUT_KEYS.indexOf(e.key);
+      if (fresh && shortcut >= 0 && suggestions[shortcut]) {
+        e.preventDefault();
+        applySuggestion(suggestions[shortcut]!);
+        return;
       }
       if (e.key === "Escape") {
         setSuggestions([]);
@@ -450,25 +517,44 @@ function ArabiMalayalamEditor() {
         return;
       }
     }
+  };
 
-    // If a remote/corpus lookup is still pending, Space should still commit
-    // the best available transliteration instead of leaving Roman text behind.
-    if (e.key === " " && currentWord.trim()) {
-      e.preventDefault();
+  /**
+   * Replace `word` (still sitting at `start`, followed by the separator the
+   * user just typed) with its best suggestion. Mobile keyboards don't report
+   * Space or punctuation through keydown, so this runs from the change event.
+   */
+  const commitWordBeforeSeparator = async (word: string, start: number) => {
+    const ready = suggestionsWord === word && suggestions.length > 0;
+    let choice = ready ? (suggestions[activeSuggestionIdx] ?? suggestions[0]) : undefined;
+    if (!choice) {
       const { getSmartTransliterationCandidates } = await loadSmartEngine();
-      const requestedWord = currentWord;
       const previousMalayalam = previousMalayalamRef.current;
-      const candidates = await getSmartTransliterationCandidates(
-        requestedWord,
-        6,
+      [choice] = await getSmartTransliterationCandidates(
+        word,
+        SUGGESTION_COUNT,
         previousMalayalam ? { previousMalayalam } : {},
       );
-      const activeText = textareaRef.current?.value.slice(wordRange.start, wordRange.end);
-      if (activeText === requestedWord) {
-        const target = candidates[0];
-        if (target) applySuggestion(target);
-      }
     }
+
+    const el = textareaRef.current;
+    if (!el || !choice || choice.text === word) return;
+    const value = el.value;
+    if (value.slice(start, start + word.length) !== word) return; // edited meanwhile
+
+    const updated = value.slice(0, start) + choice.text + value.slice(start + word.length);
+    const caret = el.selectionStart;
+    const delta = choice.text.length - word.length;
+    pendingCaretRef.current = caret >= start + word.length ? caret + delta : caret;
+
+    // Render now, before another keystroke can read the old DOM value.
+    flushSync(() => {
+      setHistoryStack((prev) => appendHistory(prev, updated));
+      setRedoStack([]);
+      setText(updated);
+    });
+    triggerAutoSave(updated, title);
+    rememberChoice(word, choice);
   };
 
   // Handle typing & isolate active word before caret
@@ -481,6 +567,19 @@ function ArabiMalayalamEditor() {
 
     setText(val);
     triggerAutoSave(val, title);
+
+    // A single separator typed straight after the active word commits it.
+    const typedChar = val.length === text.length + 1 ? val[pos - 1] : undefined;
+    if (
+      typedChar &&
+      COMMIT_CHARACTER.test(typedChar) &&
+      currentWord &&
+      wordRange.start === pos - 1 - currentWord.length &&
+      val.slice(wordRange.start, pos - 1) === currentWord &&
+      !ARABIC_SCRIPT.test(currentWord)
+    ) {
+      void commitWordBeforeSeparator(currentWord, wordRange.start);
+    }
 
     const leftText = val.slice(0, pos);
     const match = leftText.match(/[\p{L}\p{M}0-9']+$/u);
@@ -670,11 +769,14 @@ function ArabiMalayalamEditor() {
           }
         }
         if (transcript) {
-          const { convertMalayalamToArabiMalayalam, transliterateToArabic } =
-            await import("../lib/transliteration/enhancedTransliterator");
-          const converted =
-            convertMalayalamToArabiMalayalam(transcript)[0] || transliterateToArabic(transcript);
-          const updated = (text ? text + " " : "") + converted;
+          // Dictation may mix Malayalam and English words; convert both.
+          const { transliterateSmartPastedText } = await loadSmartEngine();
+          const converted = await transliterateSmartPastedText(transcript.trim());
+          // This callback outlives the render it was created in: read the live text.
+          const current = textRef.current;
+          const updated = (current ? current.trimEnd() + " " : "") + converted + " ";
+          setHistoryStack((prev) => appendHistory(prev, updated));
+          setRedoStack([]);
           setText(updated);
           triggerAutoSave(updated, title);
         }
@@ -1193,24 +1295,30 @@ function ArabiMalayalamEditor() {
                     top: `${suggestionPos.top}px`,
                     left: `${suggestionPos.left}px`,
                   }}
+                  ref={suggestionListRef}
                   id="transliteration-suggestions"
                   role="listbox"
                   aria-label="Transliteration suggestions"
-                  className="absolute z-50 w-52 max-w-[calc(100vw-36px)] bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-xl shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-75 select-none"
+                  // Keep focus in the textarea so a tap doesn't close the phone keyboard.
+                  onMouseDown={(e) => e.preventDefault()}
+                  className="absolute z-50 w-56 max-w-[calc(100vw-36px)] max-h-[min(26rem,48vh)] overflow-y-auto overscroll-contain bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-xl shadow-xl p-1.5 animate-in fade-in zoom-in-95 duration-75 select-none"
                 >
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-0.5">
                     {suggestions.map((sug, idx) => {
                       const isSelected = idx === activeSuggestionIdx;
-                      const isLastCandidate = idx === suggestions.length - 1;
+                      const isTyped = sug.source === "typed";
+                      const hint =
+                        !isTyped && sug.malayalam !== sug.text ? sug.malayalam : undefined;
                       return (
                         <button
                           type="button"
-                          key={idx}
+                          key={`${idx}-${sug.text}`}
                           id={`transliteration-suggestion-${idx}`}
                           onClick={() => applySuggestion(sug)}
                           role="option"
                           aria-selected={isSelected}
-                          className={`w-full px-3 py-2 flex items-center justify-between cursor-pointer rounded-lg transition-colors ${
+                          title={isTyped ? "Keep exactly what you typed" : undefined}
+                          className={`w-full px-3 py-1 flex items-center justify-between cursor-pointer rounded-lg transition-colors ${
                             isSelected
                               ? "bg-[#dcefe3] dark:bg-[#1b3d2b] text-[#137333] dark:text-[#a3e635] font-bold"
                               : "text-[#202124] dark:text-[#e8eaed] hover:bg-[#f1f3f4] dark:hover:bg-[#2d3135]"
@@ -1218,17 +1326,25 @@ function ArabiMalayalamEditor() {
                         >
                           <div className="flex items-center gap-2.5 overflow-hidden w-full">
                             <span className="text-sm opacity-70 font-mono font-bold shrink-0">
-                              {idx + 1}.
+                              {SHORTCUT_KEYS[idx] ?? ""}.
                             </span>
-                            <span
-                              className={`text-lg font-bold truncate ${
-                                isLastCandidate ? "opacity-75 font-mono text-base" : ""
-                              }`}
-                              style={{
-                                fontFamily: isLastCandidate ? "monospace" : selectedFont.font,
-                              }}
-                            >
-                              {sug.text}
+                            <span className="flex flex-col items-start min-w-0 leading-tight">
+                              <span
+                                className={`text-lg font-bold truncate max-w-full ${
+                                  isTyped ? "opacity-75 font-mono text-base" : ""
+                                }`}
+                                style={{ fontFamily: isTyped ? "monospace" : selectedFont.font }}
+                              >
+                                {sug.text}
+                              </span>
+                              {hint && (
+                                <span
+                                  lang="ml"
+                                  className="text-xs font-normal text-[#5f6368] dark:text-[#9aa0a6] truncate max-w-full"
+                                >
+                                  {hint}
+                                </span>
+                              )}
                             </span>
                           </div>
                         </button>

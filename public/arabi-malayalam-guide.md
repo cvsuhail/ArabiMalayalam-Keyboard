@@ -4,7 +4,7 @@ ArabiMalayalam is a free browser-based keyboard for producing Arabi-Malayalam te
 
 ## What Arabi-Malayalam means
 
-Arabi-Malayalam is an adapted Arabic script used to write Malayalam. Modified letters and vowel marks represent Malayalam sounds that do not exist in standard Arabic. Representative correspondences include ഞ → ݧ, ങ → ڞ, ഗ → ڰ, റ → ڔ, ള → ڶ, ണ → ڹ, and ഴ → ژ.
+Arabi-Malayalam is an adapted Arabic script used to write Malayalam. Modified letters and vowel marks represent Malayalam sounds that do not exist in standard Arabic. Representative correspondences include ഞ → ڿ, ങ → ۼ, ട → ڊ, ഡ → ڗ, ണ → ڹ, ള → ۻ, ഴ → ژ, ഷ → ۺ, ര → ڔ, and റ → ر. Aspirated consonants add ھ (ഥ → تھ), and Arabic loanwords keep their Arabic spelling (സ്വലാത്ത് → صَلَاة).
 
 ## Supported input
 

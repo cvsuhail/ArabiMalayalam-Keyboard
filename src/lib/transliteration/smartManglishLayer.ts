@@ -1,38 +1,40 @@
 /**
  * smartManglishLayer.ts
  *
- * Drop-in "brain" layer for a Manglish -> Malayalam -> Arabi-Malayalam keyboard.
+ * The keyboard's ranking layer: Manglish -> ranked Malayalam -> Arabi-Malayalam.
  *
- * It is designed to sit ABOVE your current:
- *   - manglishToMalayalam()
- *   - convertMalayalamToArabiMalayalam()
- *   - ARABI_MALAYALAM_VOCABULARY
- *   - MALAYALAM_TO_ARABI_VOCABULARY
+ *   Roman input
+ *     -> Malayalam candidates from user learning, curated overrides, registered
+ *        Roman/Malayalam pairs, an optional model provider and the phonetic
+ *        generator (scored against the word-frequency lexicon)
+ *     -> whole-word completions from the lexicon
+ *     -> Arabi-Malayalam rendering (Arabic loanword spelling or the rule engine)
  *
- * Main improvements:
- *   1. Ranked candidates instead of insertion order.
- *   2. Supports very large external Malayalam/Manglish lexicons.
- *   3. Supports an optional ML/model provider (IndicXlit, your own API, etc.).
- *   4. Learns the user's chosen spelling.
- *   5. Keeps your curated Arabi-Malayalam spellings as highest-quality output.
- *   6. Handles unknown words through your existing phonetic fallback.
- *   7. Normalizes common Manglish typing variation.
- *
- * IMPORTANT:
- * Do NOT bundle 4M+ word pairs directly into your web JS.
- * Keep a frequent subset locally and query the full model/index from a backend.
+ * Ranking happens on Malayalam words, never on Arabic strings: there are far
+ * fewer Malayalam spellings to learn, and every Arabic form is then rendered
+ * by one consistent engine.
  */
 
 import {
-  manglishToMalayalam,
+  arabicInputCandidates,
   convertMalayalamToArabiMalayalam,
-  getTransliterationCandidates,
-  ARABI_MALAYALAM_VOCABULARY,
   MANGLISH_TO_MALAYALAM_MAP,
-  MALAYALAM_TO_ARABI_VOCABULARY,
+  openMalayalamPrefixes,
+  PHONETIC_COST_WEIGHT,
+  phoneticMalayalamCandidates,
+  transliterateToArabic,
 } from "./enhancedTransliterator.ts";
+import {
+  lexiconBoost,
+  lexiconCompletions,
+  loadLexicon as loadBundledLexicon,
+  registerLexiconEntries,
+  spellingPlausibility,
+} from "./malayalamLexicon.ts";
+import { arabicLoanwordForRoman, arabicSpellingForMalayalam } from "./arabicLoanwords.ts";
 
-export type CandidateSource = "user" | "override" | "lexicon" | "model" | "phonetic" | "typed";
+export type CandidateSource =
+  "user" | "override" | "lexicon" | "model" | "phonetic" | "completion" | "typed";
 
 export interface SmartCandidate {
   text: string; // final Arabi-Malayalam text
@@ -73,15 +75,37 @@ export type MalayalamProvider = (
 /* -------------------------------------------------------------------------- */
 
 const ROMAN_TO_MALAYALAM = new Map<string, Map<string, number>>();
-const MALAYALAM_FREQUENCY = new Map<string, number>();
 const MALAYALAM_CONTEXT_FREQUENCY = new Map<string, Map<string, number>>();
 const USER_PREFERENCES = new Map<string, Map<string, number>>();
+const ARABI_PREFERENCES = new Map<string, string>();
 const MODEL_CACHE = new Map<string, MalayalamCandidate[]>();
+
+/** Preferred mark for Malayalam o/ō: inverted damma ٗ (default) or plain damma ُ. */
+let oStyle: "inverted" | "plain" = "inverted";
 
 let externalMalayalamProvider: MalayalamProvider | null = null;
 
 const MAX_ROMAN_VARIANTS = 12;
-const DEFAULT_LIMIT = 6;
+/**
+ * Many Manglish spellings fit several words (padam: പടം, പാടം, പാഠം, പദം), so
+ * the list is long enough to hold the word the user meant, not just our best guess.
+ */
+const DEFAULT_LIMIT = 10;
+const MAX_COMPLETIONS = 3;
+/** Phonetic spellings scored per word; the lexicon decides which surface. */
+const PHONETIC_POOL = 20;
+/**
+ * Spellings the word list doesn't know can still be real words (പാടം, വാള,
+ * നടു are missing from the subtitle corpus), so a few always stay in the list.
+ */
+const MAX_UNLISTED_WITH_KNOWN = 3;
+const MAX_UNLISTED_ALONE = 6;
+/**
+ * An unknown spelling is shown only as a direct reading of what was typed
+ * (ല/ള, ന/ണ, ര/റ choices). Stretching a short vowel (vala -> വലാ) must land
+ * on a known word to be worth a slot.
+ */
+const MAX_UNLISTED_COST = 1;
 const INTERACTIVE_PROVIDER_TIMEOUT_MS = 180;
 
 export function setMalayalamProvider(provider: MalayalamProvider | null): void {
@@ -89,14 +113,18 @@ export function setMalayalamProvider(provider: MalayalamProvider | null): void {
   MODEL_CACHE.clear();
 }
 
+/** Fetch the bundled Malayalam word-frequency list (browser only). */
+export function loadLexicon(): Promise<void> {
+  return loadBundledLexicon();
+}
+
 /**
- * Register a corpus/lexicon in chunks.
- *
- * Suggested use:
- * - a small frequent-word JSON/SQLite/IndexedDB index in the browser;
- * - your complete Aksharantar/Dakshina index on the backend.
+ * Register Roman/Malayalam pairs in chunks, e.g. a frequent subset of a
+ * transliteration corpus. Very large datasets belong behind a model provider.
  */
 export function registerManglishLexicon(entries: BulkLexiconEntry[]): void {
+  const frequencies: Array<{ malayalam: string; frequency: number }> = [];
+
   for (const entry of entries) {
     const roman = normalizeRoman(entry.roman);
     const ml = normalizeMalayalam(entry.malayalam);
@@ -109,30 +137,18 @@ export function registerManglishLexicon(entries: BulkLexiconEntry[]): void {
       bucket = new Map<string, number>();
       ROMAN_TO_MALAYALAM.set(roman, bucket);
     }
-
-    const previous = bucket.get(ml) ?? 0;
-    bucket.set(ml, Math.max(previous, frequency));
-
-    const oldMlFrequency = MALAYALAM_FREQUENCY.get(ml) ?? 0;
-    MALAYALAM_FREQUENCY.set(ml, oldMlFrequency + frequency);
+    bucket.set(ml, Math.max(bucket.get(ml) ?? 0, frequency));
+    frequencies.push({ malayalam: ml, frequency });
   }
+
+  registerLexiconEntries(frequencies);
 }
 
-/**
- * Optional Malayalam-only frequency corpus.
- * Use this for ranking outputs even when a Roman pair is not frequency-tagged.
- */
+/** Malayalam-only word frequencies, used to rank outputs from every source. */
 export function registerMalayalamFrequencies(
   entries: Array<{ malayalam: string; frequency: number }>,
 ): void {
-  for (const entry of entries) {
-    const ml = normalizeMalayalam(entry.malayalam);
-    if (!ml) continue;
-    MALAYALAM_FREQUENCY.set(
-      ml,
-      Math.max(MALAYALAM_FREQUENCY.get(ml) ?? 0, Math.max(1, entry.frequency)),
-    );
-  }
+  registerLexiconEntries(entries);
 }
 
 /** Register Malayalam bigram counts for previous-word context ranking. */
@@ -156,65 +172,98 @@ export function registerMalayalamContext(entries: MalayalamContextEntry[]): void
 /* -------------------------------------------------------------------------- */
 
 const STORAGE_KEY = "arabi-malayalam:user-preferences:v1";
+const ARABI_STORAGE_KEY = "arabi-malayalam:arabi-preferences:v1";
+const O_STYLE_STORAGE_KEY = "arabi-malayalam:o-style:v1";
 
-function canUseLocalStorage(): boolean {
-  return typeof window !== "undefined" && !!window.localStorage;
+function storage(): Storage | null {
+  try {
+    return typeof window !== "undefined" ? window.localStorage : null;
+  } catch {
+    return null;
+  }
 }
 
 export function loadUserPreferences(): void {
-  if (!canUseLocalStorage()) return;
+  const store = storage();
+  if (!store) return;
 
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-
-    const parsed = JSON.parse(raw) as Record<string, Record<string, number>>;
-    USER_PREFERENCES.clear();
-
-    for (const [roman, values] of Object.entries(parsed)) {
-      const bucket = new Map<string, number>();
-      for (const [ml, count] of Object.entries(values)) {
-        bucket.set(ml, Number(count) || 1);
+    const raw = store.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, Record<string, number>>;
+      USER_PREFERENCES.clear();
+      for (const [roman, values] of Object.entries(parsed)) {
+        const bucket = new Map<string, number>();
+        for (const [ml, count] of Object.entries(values)) {
+          bucket.set(ml, Number(count) || 1);
+        }
+        USER_PREFERENCES.set(roman, bucket);
       }
-      USER_PREFERENCES.set(roman, bucket);
     }
+
+    const rawArabi = store.getItem(ARABI_STORAGE_KEY);
+    if (rawArabi) {
+      ARABI_PREFERENCES.clear();
+      for (const [ml, arabi] of Object.entries(JSON.parse(rawArabi) as Record<string, string>)) {
+        ARABI_PREFERENCES.set(ml, arabi);
+      }
+    }
+
+    oStyle = store.getItem(O_STYLE_STORAGE_KEY) === "plain" ? "plain" : "inverted";
   } catch {
     // Ignore corrupt/blocked localStorage.
   }
 }
 
 function persistUserPreferences(): void {
-  if (!canUseLocalStorage()) return;
+  const store = storage();
+  if (!store) return;
 
   try {
     const output: Record<string, Record<string, number>> = {};
-
     for (const [roman, bucket] of USER_PREFERENCES) {
       output[roman] = Object.fromEntries(bucket);
     }
-
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(output));
+    store.setItem(STORAGE_KEY, JSON.stringify(output));
+    store.setItem(ARABI_STORAGE_KEY, JSON.stringify(Object.fromEntries(ARABI_PREFERENCES)));
+    store.setItem(O_STYLE_STORAGE_KEY, oStyle);
   } catch {
     // Ignore quota/privacy-mode errors.
   }
 }
 
 /**
- * Call this when the user taps a suggestion.
- * The chosen Malayalam spelling will be ranked higher next time.
+ * Call this when the user picks a suggestion. The chosen Malayalam word ranks
+ * higher for that Roman spelling next time. Picking a word in the other
+ * o-mark style switches the style for every word; picking any other
+ * non-default spelling (e.g. the phonetic form instead of an Arabic loanword
+ * spelling) makes it that word's first form.
  */
-export function learnSelection(romanInput: string, malayalam: string): void {
+export function learnSelection(romanInput: string, malayalam: string, arabi?: string): void {
   const roman = normalizeRoman(romanInput);
   const ml = normalizeMalayalam(malayalam);
-  if (!roman || !ml) return;
+  if (!ml) return;
 
-  let bucket = USER_PREFERENCES.get(roman);
-  if (!bucket) {
-    bucket = new Map<string, number>();
-    USER_PREFERENCES.set(roman, bucket);
+  if (roman) {
+    let bucket = USER_PREFERENCES.get(roman);
+    if (!bucket) {
+      bucket = new Map<string, number>();
+      USER_PREFERENCES.set(roman, bucket);
+    }
+    bucket.set(ml, (bucket.get(ml) ?? 0) + 1);
   }
+  if (arabi) {
+    const chosen = arabi.normalize("NFC");
+    const [inverted, plain] = convertMalayalamToArabiMalayalam(ml).map((t) => t.normalize("NFC"));
+    if (plain && chosen === plain) oStyle = "plain";
+    else if (plain && chosen === inverted) oStyle = "inverted";
 
-  bucket.set(ml, (bucket.get(ml) ?? 0) + 1);
+    const isEngineForm = chosen === inverted || chosen === plain;
+    const defaultFirst =
+      arabicSpellingForMalayalam(ml)?.normalize("NFC") ?? (isEngineForm ? chosen : "");
+    if (chosen === defaultFirst) ARABI_PREFERENCES.delete(ml);
+    else ARABI_PREFERENCES.set(ml, chosen);
+  }
   persistUserPreferences();
 }
 
@@ -235,45 +284,33 @@ function normalizeMalayalam(input: string): string {
   return input.normalize("NFC").trim();
 }
 
+const MALAYALAM_RE = /[ഀ-ൿ]/u;
+const ARABIC_RE = /[؀-ۿݐ-ݿࢠ-ࣿ]/u;
+
 /**
- * Generate common typing variations without exploding the search space.
- *
- * Examples:
- *   njaan -> njan
- *   veedu -> vidu / veedu variants remain searchable
- *   cheyyunnu -> cheyunnu
- *   aa/ee/oo and doubled consonants get conservative alternates
+ * Generate common typing variations for registered Roman/Malayalam pairs
+ * without exploding the search space (njaan -> njan, cheyyunnu -> cheyunnu).
  */
 export function generateRomanVariants(input: string): string[] {
   const base = normalizeRoman(input);
   if (!base) return [];
 
   const out = new Set<string>([base]);
-
   const add = (v: string) => {
     if (v && out.size < MAX_ROMAN_VARIANTS) out.add(v);
   };
 
-  // Long-vowel typing variants.
   add(base.replace(/aa/g, "a"));
   add(base.replace(/ee/g, "i"));
   add(base.replace(/ii/g, "i"));
   add(base.replace(/oo/g, "u"));
   add(base.replace(/uu/g, "u"));
-
-  // Reverse a few common short-vowel conventions.
   if (base.includes("i")) add(base.replace(/i/g, "ee"));
   if (base.includes("u")) add(base.replace(/u/g, "oo"));
-
-  // Conservative duplicate-letter variation.
   add(base.replace(/([bcdfghjklmnpqrstvwxyz])\1+/g, "$1"));
-
-  // Malayalam-specific Roman habits.
   add(base.replace(/nj/g, "gn"));
   add(base.replace(/gn/g, "nj"));
   add(base.replace(/zh/g, "z"));
-
-  // Common "y" compression in casual typing.
   add(base.replace(/yy/g, "y"));
 
   return [...out].slice(0, MAX_ROMAN_VARIANTS);
@@ -283,12 +320,30 @@ export function generateRomanVariants(input: string): string[] {
 /*                                  SCORING                                    */
 /* -------------------------------------------------------------------------- */
 
-function frequencyBoost(ml: string): number {
-  const f = MALAYALAM_FREQUENCY.get(ml) ?? 0;
-  if (!f) return 0;
+/**
+ * Base scores per source. Every Malayalam candidate also receives the lexicon
+ * frequency boost (0, or roughly 160-310 for attested words), so the bases are
+ * spaced to keep user choices first and curated overrides above guesses.
+ */
+const SOURCE_BASE: Record<CandidateSource, number> = {
+  user: 1500,
+  override: 1080,
+  lexicon: 760,
+  model: 700,
+  phonetic: 560,
+  completion: 400,
+  typed: 0,
+};
 
-  // Log scale prevents huge corpus counts from dominating everything.
-  return Math.min(90, Math.log10(f + 1) * 18);
+/** Per-letter log-probability between real words (≈ -2.4) and junk (≈ -3.4). */
+const PLAUSIBLE_SPELLING = -2.9;
+const SHAPE_WEIGHT = 60;
+
+/** Ranking nudge for a spelling the lexicon lacks: up if it looks like Malayalam. */
+function unlistedShapeBonus(ml: string): number {
+  const plausibility = spellingPlausibility(ml);
+  if (!plausibility) return 0;
+  return Math.max(-90, Math.min(90, (plausibility - PLAUSIBLE_SPELLING) * SHAPE_WEIGHT));
 }
 
 function contextBoost(previousMalayalam: string | undefined, ml: string): number {
@@ -298,52 +353,130 @@ function contextBoost(previousMalayalam: string | undefined, ml: string): number
   return frequency ? Math.min(110, Math.log10(frequency + 1) * 24) : 0;
 }
 
-function addMalayalamCandidate(
-  map: Map<string, { score: number; source: CandidateSource }>,
-  ml: string,
-  score: number,
-  source: CandidateSource,
-): void {
-  const normalized = normalizeMalayalam(ml);
-  if (!normalized) return;
-  if (/[A-Za-z]/.test(normalized)) return;
+interface RankedMalayalam {
+  text: string;
+  score: number;
+  source: CandidateSource;
+}
 
-  const finalScore = score + frequencyBoost(normalized);
-  const previous = map.get(normalized);
+async function fetchModelCandidates(
+  normalized: string,
+  context: SmartContext,
+): Promise<MalayalamCandidate[]> {
+  if (!externalMalayalamProvider) return [];
 
-  if (!previous || finalScore > previous.score) {
-    map.set(normalized, { score: finalScore, source });
+  try {
+    const cacheKey = `${normalized}:8:${context.previousMalayalam ?? ""}`;
+    const cached = MODEL_CACHE.get(cacheKey);
+    if (cached) return cached;
+
+    const request = externalMalayalamProvider(normalized, 8, context)
+      .then((outputs) => {
+        MODEL_CACHE.set(cacheKey, outputs);
+        return outputs;
+      })
+      .catch(() => []);
+    const outputs = await Promise.race([
+      request,
+      new Promise<undefined>((resolve) =>
+        setTimeout(() => resolve(undefined), INTERACTIVE_PROVIDER_TIMEOUT_MS),
+      ),
+    ]);
+    return outputs ?? [];
+  } catch {
+    // Network/model errors must never break keyboard typing.
+    return [];
   }
 }
 
-function sourceBaseScore(source: CandidateSource): number {
-  switch (source) {
-    case "user":
-      return 1200;
-    case "override":
-      return 1080;
-    case "lexicon":
-      return 900;
-    case "model":
-      return 820;
-    case "phonetic":
-      return 620;
-    case "typed":
-      return 0;
-  }
-}
+/** Rank Malayalam candidates for a Roman word. Completions are flagged by source. */
+function rankMalayalam(
+  input: string,
+  context: SmartContext,
+  modelOutputs: MalayalamCandidate[],
+): RankedMalayalam[] {
+  const normalized = normalizeRoman(input);
+  const ranked = new Map<string, RankedMalayalam>();
 
-/* -------------------------------------------------------------------------- */
-/*                       ROMAN -> MALAYALAM CANDIDATES                         */
-/* -------------------------------------------------------------------------- */
+  const add = (ml: string, score: number, source: CandidateSource) => {
+    const text = normalizeMalayalam(ml);
+    if (!text || /[A-Za-z]/.test(text)) return;
+    const finalScore =
+      SOURCE_BASE[source] +
+      score +
+      lexiconBoost(text) +
+      contextBoost(context.previousMalayalam, text);
+    const previous = ranked.get(text);
+    if (!previous || finalScore > previous.score) {
+      ranked.set(text, { text, score: finalScore, source });
+    }
+  };
+
+  /* 1. User selections */
+  for (const [ml, count] of USER_PREFERENCES.get(normalized) ?? []) {
+    add(ml, Math.min(100, count * 12), "user");
+  }
+
+  /* 2. Curated overrides */
+  (MANGLISH_TO_MALAYALAM_MAP[normalized] ?? []).forEach((ml, index) => {
+    add(ml, -index * 8, "override");
+  });
+
+  /* 3. Registered Roman/Malayalam pairs */
+  generateRomanVariants(input).forEach((variant, variantIndex) => {
+    const bucket = ROMAN_TO_MALAYALAM.get(variant);
+    if (!bucket) return;
+    [...bucket.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .forEach(([ml, frequency], rank) => {
+        const corpusBoost = Math.min(75, Math.log10(frequency + 1) * 15);
+        add(ml, corpusBoost - variantIndex * 9 - rank * 5, "lexicon");
+      });
+  });
+
+  /* 4. Optional model provider */
+  modelOutputs.forEach((candidate, index) => {
+    add(candidate.text, (candidate.score ?? 0) - index * 12, "model");
+  });
+
+  /* 5. Phonetic generator (add() applies the lexicon boost). Spellings the
+        lexicon doesn't know are ordered by how Malayalam-like they look. */
+  for (const candidate of phoneticMalayalamCandidates(input, PHONETIC_POOL)) {
+    const known = lexiconBoost(candidate.text) > 0;
+    if (!known && candidate.cost >= MAX_UNLISTED_COST) continue;
+    const shape = known ? 0 : unlistedShapeBonus(candidate.text);
+    add(candidate.text, -candidate.cost * PHONETIC_COST_WEIGHT + shape, "phonetic");
+  }
+
+  /* 6. Whole-word completions for an unfinished word */
+  if (normalized.length >= 3) {
+    const seen = new Set<string>();
+    for (const prefix of openMalayalamPrefixes(input, 3)) {
+      for (const completion of lexiconCompletions(prefix, MAX_COMPLETIONS)) {
+        if (ranked.has(completion.text) || seen.has(completion.text)) continue;
+        seen.add(completion.text);
+        const extraLength = Array.from(completion.text).length - Array.from(prefix).length;
+        add(completion.text, -extraLength * 6, "completion");
+      }
+    }
+  }
+
+  // Spellings the lexicon doesn't know rank below known words; keep only the
+  // cheapest few so the list isn't filled with near-identical guesses.
+  const sorted = [...ranked.values()].sort((a, b) => b.score - a.score);
+  const isGuess = (candidate: RankedMalayalam) =>
+    candidate.source === "phonetic" && lexiconBoost(candidate.text) === 0;
+  const maxGuesses = sorted.some((candidate) => !isGuess(candidate))
+    ? MAX_UNLISTED_WITH_KNOWN
+    : MAX_UNLISTED_ALONE;
+  let guesses = 0;
+  return sorted.filter((candidate) => !isGuess(candidate) || guesses++ < maxGuesses);
+}
 
 /**
- * This returns Malayalam candidates first.
- * That separation is important:
- *
- * Roman text -> Malayalam candidate ranking -> Arabi-Malayalam rendering
- *
- * Do not try to learn millions of Roman -> Arabi spellings directly.
+ * Ranked Malayalam candidates for a Roman word (user learning, overrides,
+ * registered pairs, model provider, phonetic rules). Completions excluded.
  */
 export async function getMalayalamCandidates(
   input: string,
@@ -352,104 +485,9 @@ export async function getMalayalamCandidates(
 ): Promise<Array<{ text: string; score: number; source: CandidateSource }>> {
   const normalized = normalizeRoman(input);
   if (!normalized) return [];
-
-  const ranked = new Map<string, { score: number; source: CandidateSource }>();
-  const addRanked = (ml: string, score: number, source: CandidateSource) =>
-    addMalayalamCandidate(ranked, ml, score + contextBoost(context.previousMalayalam, ml), source);
-
-  /* 1. User selections */
-  const userBucket = USER_PREFERENCES.get(normalized);
-  if (userBucket) {
-    for (const [ml, count] of userBucket) {
-      addRanked(ml, sourceBaseScore("user") + Math.min(100, count * 12), "user");
-    }
-  }
-
-  /* 2. Curated exact override dictionary from your current project */
-  //
-  // IMPORTANT:
-  // Keep only true spelling/transliteration variants here.
-  // Do NOT map a word to an expanded sentence or a different inflected word.
-  //
-  const curatedOutputs = MANGLISH_TO_MALAYALAM_MAP[normalized] ?? [];
-  curatedOutputs.forEach((ml, index) => {
-    addRanked(ml, sourceBaseScore("override") - index * 8, "override");
-  });
-
-  /* 3. Large corpus lexicon */
-  const variants = generateRomanVariants(input);
-
-  variants.forEach((variant, variantIndex) => {
-    const bucket = ROMAN_TO_MALAYALAM.get(variant);
-    if (!bucket) return;
-
-    const sorted = [...bucket.entries()].sort((a, b) => b[1] - a[1]);
-
-    sorted.slice(0, 12).forEach(([ml, freq], rank) => {
-      const variantPenalty = variantIndex * 9;
-      const corpusBoost = Math.min(75, Math.log10(freq + 1) * 15);
-
-      addRanked(
-        ml,
-        sourceBaseScore("lexicon") + corpusBoost - variantPenalty - rank * 5,
-        "lexicon",
-      );
-    });
-  });
-
-  /* 4. Optional model provider (IndicXlit / your own service) */
-  if (externalMalayalamProvider) {
-    try {
-      const cacheKey = `${normalized}:8:${context.previousMalayalam ?? ""}`;
-      let modelOutputs = MODEL_CACHE.get(cacheKey);
-      if (!modelOutputs) {
-        const request = externalMalayalamProvider(normalized, 8, context)
-          .then((outputs) => {
-            MODEL_CACHE.set(cacheKey, outputs);
-            return outputs;
-          })
-          .catch(() => []);
-        modelOutputs = await Promise.race([
-          request,
-          new Promise<undefined>((resolve) =>
-            setTimeout(() => resolve(undefined), INTERACTIVE_PROVIDER_TIMEOUT_MS),
-          ),
-        ]);
-      }
-
-      modelOutputs?.forEach((candidate, index) => {
-        addRanked(
-          candidate.text,
-          sourceBaseScore("model") + (candidate.score ?? 0) - index * 12,
-          "model",
-        );
-      });
-    } catch {
-      // Network/model errors must never break keyboard typing.
-    }
-  }
-
-  /* 5. Existing phonetic fallback */
-  //
-  // manglishToMalayalam() is already called above. If you later split your
-  // exact dictionary lookup from the rule engine, put the pure rule result here.
-  try {
-    const fallback = manglishToMalayalam(input);
-
-    fallback.forEach((ml, index) => {
-      addRanked(ml, sourceBaseScore("phonetic") - index * 12, "phonetic");
-    });
-  } catch {
-    // Ignore.
-  }
-
-  return [...ranked.entries()]
-    .map(([text, meta]) => ({
-      text,
-      score: meta.score,
-      source: meta.source,
-    }))
-    .sort((a, b) => b.score - a.score)
+  const modelOutputs = await fetchModelCandidates(normalized, context);
+  return rankMalayalam(input, context, modelOutputs)
+    .filter((candidate) => candidate.source !== "completion")
     .slice(0, Math.max(1, limit));
 }
 
@@ -457,31 +495,113 @@ export async function getMalayalamCandidates(
 /*                     MALAYALAM -> ARABI-MALAYALAM                           */
 /* -------------------------------------------------------------------------- */
 
-function getArabiForms(ml: string): string[] {
-  const out = new Set<string>();
+/**
+ * Arabi-Malayalam forms of one Malayalam word with their score offsets, plus
+ * the same spelling in the other o-mark style (ٗ vs ُ), if it differs.
+ */
+function getArabiForms(ml: string): {
+  forms: Array<{ text: string; offset: number }>;
+  alternateStyle?: string;
+} {
+  const forms: Array<{ text: string; offset: number }> = [];
+  const add = (text: string, offset: number) => {
+    const normalized = text.normalize("NFC");
+    if (normalized && !forms.some((form) => form.text === normalized)) {
+      forms.push({ text: normalized, offset });
+    }
+  };
 
-  // Curated spellings always come first.
-  const curated = MALAYALAM_TO_ARABI_VOCABULARY[ml];
-  if (curated) {
-    for (const value of curated) out.add(value.normalize("NFC"));
-  }
+  const preferred = ARABI_PREFERENCES.get(ml);
+  if (preferred) add(preferred, 30);
 
-  // Rule-based conversion handles unseen Malayalam words.
+  const loanword = arabicSpellingForMalayalam(ml);
+  if (loanword) add(loanword, 20);
+
+  let alternateStyle: string | undefined;
   try {
-    for (const value of convertMalayalamToArabiMalayalam(ml)) {
-      if (value) out.add(value.normalize("NFC"));
+    const [inverted, plain] = convertMalayalamToArabiMalayalam(ml);
+    const [first, second] = oStyle === "plain" && plain ? [plain, inverted] : [inverted, plain];
+    if (first) add(first, 0);
+    if (second && !forms.some((form) => form.text === second.normalize("NFC"))) {
+      alternateStyle = second.normalize("NFC");
     }
   } catch {
     // Ignore converter failure for one candidate.
   }
-
-  return [...out];
+  return alternateStyle ? { forms, alternateStyle } : { forms };
 }
 
 /**
- * Main keyboard function.
- *
- * It returns final Arabi-Malayalam candidates, ranked.
+ * Assemble the final list: best literal candidate first (Space commits it),
+ * at most MAX_COMPLETIONS completions, the top word in the other o-mark style
+ * (so either style is one tap away), and the typed text last.
+ */
+function finalize(
+  candidates: SmartCandidate[],
+  typed: string,
+  limit: number,
+  alternateStyle?: SmartCandidate,
+): SmartCandidate[] {
+  const best = new Map<string, SmartCandidate>();
+  for (const candidate of candidates) {
+    const previous = best.get(candidate.text);
+    if (!previous || candidate.score > previous.score) best.set(candidate.text, candidate);
+  }
+
+  let ranked = [...best.values()].sort((a, b) => b.score - a.score);
+  const firstLiteral = ranked.findIndex((candidate) => candidate.source !== "completion");
+  if (firstLiteral > 0) {
+    ranked = [ranked[firstLiteral]!, ...ranked.filter((_, index) => index !== firstLiteral)];
+  }
+
+  let completions = 0;
+  ranked = ranked.filter((candidate) => {
+    if (candidate.text === typed) return false;
+    if (candidate.source !== "completion") return true;
+    completions += 1;
+    return completions <= MAX_COMPLETIONS;
+  });
+
+  if (limit <= 1) return ranked.slice(0, Math.max(1, limit));
+
+  const typedCandidate: SmartCandidate = { text: typed, score: 0, source: "typed" };
+  if (alternateStyle && limit > 2 && !ranked.some((c) => c.text === alternateStyle.text)) {
+    return [...ranked.slice(0, limit - 2), alternateStyle, typedCandidate];
+  }
+  return [...ranked.slice(0, limit - 1), typedCandidate];
+}
+
+function renderMalayalamCandidates(ranked: RankedMalayalam[]): {
+  candidates: SmartCandidate[];
+  alternateStyle?: SmartCandidate;
+} {
+  // The alternate o-style belongs to the word Space would commit: the best
+  // non-completion candidate (finalize() moves it to the front).
+  const topLiteral = ranked.find((candidate) => candidate.source !== "completion");
+  let alternateStyle: SmartCandidate | undefined;
+  const candidates = ranked.flatMap((candidate) => {
+    const { forms, alternateStyle: alternate } = getArabiForms(candidate.text);
+    if (candidate === topLiteral && alternate) {
+      alternateStyle = {
+        text: alternate,
+        malayalam: candidate.text,
+        score: 1,
+        source: candidate.source,
+      };
+    }
+    return forms.map(({ text, offset }) => ({
+      text,
+      malayalam: candidate.text,
+      score: candidate.score + offset,
+      source: candidate.source,
+    }));
+  });
+  return alternateStyle ? { candidates, alternateStyle } : { candidates };
+}
+
+/**
+ * Main keyboard function: ranked Arabi-Malayalam candidates for one word of
+ * Manglish, Malayalam or Arabic input. The last candidate is the typed text.
  */
 export async function getSmartTransliterationCandidates(
   input: string,
@@ -491,95 +611,52 @@ export async function getSmartTransliterationCandidates(
   const trimmed = input.trim();
   if (!trimmed) return [];
 
-  if (/[\u0D00-\u0D7F]/u.test(trimmed)) {
-    const converted: SmartCandidate[] = getArabiForms(trimmed)
-      .slice(0, Math.max(1, limit - 1))
-      .map((text, index) => ({
-        text,
-        malayalam: trimmed,
-        score: sourceBaseScore("override") - index * 5,
-        source: "override" as const,
-      }));
-    if (limit > 1) {
-      converted.push({
-        text: trimmed,
-        malayalam: trimmed,
-        score: 0,
-        source: "typed",
-      });
-    }
-    return converted.slice(0, limit);
+  if (MALAYALAM_RE.test(trimmed)) {
+    const word = normalizeMalayalam(trimmed);
+    const ranked: RankedMalayalam[] = [
+      { text: word, score: SOURCE_BASE.override + lexiconBoost(word), source: "override" },
+      ...lexiconCompletions(word, MAX_COMPLETIONS, 2).map((completion) => ({
+        text: completion.text,
+        score: SOURCE_BASE.completion + lexiconBoost(completion.text),
+        source: "completion" as const,
+      })),
+    ];
+    const { candidates, alternateStyle } = renderMalayalamCandidates(ranked);
+    return finalize(candidates, trimmed, limit, alternateStyle);
   }
 
-  if (/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/u.test(trimmed)) {
-    return getTransliterationCandidates(trimmed, "arabic")
-      .slice(0, limit)
-      .map(({ text }, index, all) => ({
-        text,
-        score: index === all.length - 1 && text === trimmed ? 0 : 1000 - index * 5,
-        source:
-          index === all.length - 1 && text === trimmed ? ("typed" as const) : ("override" as const),
-      }));
+  if (ARABIC_RE.test(trimmed)) {
+    const options = arabicInputCandidates(trimmed).filter((text) => text !== trimmed);
+    return finalize(
+      options.map((text, index) => ({ text, score: 1000 - index * 5, source: "override" })),
+      trimmed,
+      limit,
+    );
+  }
+
+  // Digits or symbols inside a word: nothing sensible to transliterate.
+  if (/[^A-Za-z'’]/.test(trimmed) || !normalizeRoman(trimmed)) {
+    return finalize([], trimmed, limit);
   }
 
   const normalized = normalizeRoman(trimmed);
-  const finalMap = new Map<string, SmartCandidate>();
+  const modelOutputs = await fetchModelCandidates(normalized, context);
+  const { candidates, alternateStyle } = renderMalayalamCandidates(
+    rankMalayalam(trimmed, context, modelOutputs),
+  );
 
-  const addFinal = (candidate: SmartCandidate) => {
-    const key = candidate.text.normalize("NFC");
-    const previous = finalMap.get(key);
-
-    if (!previous || candidate.score > previous.score) {
-      finalMap.set(key, { ...candidate, text: key });
-    }
-  };
-
-  /* A. Exact Roman -> Arabi-Malayalam curated vocabulary */
-  if (normalized && ARABI_MALAYALAM_VOCABULARY[normalized]) {
-    const exactMalayalam = manglishToMalayalam(trimmed)[0];
-    ARABI_MALAYALAM_VOCABULARY[normalized]!.forEach((text, index) => {
-      addFinal({
-        text,
-        ...(exactMalayalam ? { malayalam: exactMalayalam } : {}),
-        score: sourceBaseScore("override") + 80 - index * 8,
-        source: "override",
-      });
+  /* Arabic loanwords typed in Manglish (salam, swalath) */
+  const loanword = arabicLoanwordForRoman(normalized);
+  if (loanword) {
+    candidates.push({
+      text: loanword.arabic,
+      malayalam: loanword.malayalam,
+      score: SOURCE_BASE.override + 350,
+      source: "override",
     });
   }
 
-  /* B. Roman -> ranked Malayalam -> Arabi-Malayalam */
-  const mlCandidates = await getMalayalamCandidates(trimmed, Math.max(limit * 2, 10), context);
-
-  for (const mlCandidate of mlCandidates) {
-    const arabiForms = getArabiForms(mlCandidate.text);
-
-    arabiForms.forEach((arabi, arabiIndex) => {
-      addFinal({
-        text: arabi,
-        malayalam: mlCandidate.text,
-        score:
-          mlCandidate.score +
-          (MALAYALAM_TO_ARABI_VOCABULARY[mlCandidate.text] ? 35 : 0) -
-          arabiIndex * 5,
-        source: mlCandidate.source,
-      });
-    });
-  }
-
-  let ranked = [...finalMap.values()].sort((a, b) => b.score - a.score);
-
-  // Optional "keep what I typed" fallback as the final keyboard candidate.
-  // If you do not want this behavior, remove the following block.
-  if (limit > 1 && !ranked.some((candidate) => candidate.text === trimmed) && trimmed.length > 0) {
-    ranked = ranked.slice(0, limit - 1);
-    ranked.push({
-      text: trimmed,
-      score: 0,
-      source: "typed",
-    });
-  }
-
-  return ranked.slice(0, limit);
+  return finalize(candidates, trimmed, limit, alternateStyle);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -588,25 +665,32 @@ export async function getSmartTransliterationCandidates(
 
 const TOKEN_PATTERN =
   /https?:\/\/\S+|www\.\S+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|[A-Za-z]+(?:['’][A-Za-z]+)*/g;
+const MALAYALAM_WORD = /[ഀ-ൿ‌‍]+/gu;
+
+const isLinkOrEmail = (token: string) =>
+  /^(?:https?:\/\/|www\.)/i.test(token) || token.includes("@");
+
+/** Convert Malayalam text: Arabic loanwords keep their Arabic spelling. */
+export function transliterateMalayalamText(input: string): string {
+  const withLoanwords = input
+    .normalize("NFC")
+    .replace(MALAYALAM_WORD, (word) => arabicSpellingForMalayalam(word) ?? word);
+  return transliterateToArabic(withLoanwords);
+}
 
 /**
- * Convert pasted Manglish text while preserving URLs/e-mails/punctuation.
- *
- * This function is async because your best Malayalam layer should be allowed
- * to use an ML/backend provider.
+ * Convert pasted (or dictated) text: Malayalam and Manglish words become
+ * Arabi-Malayalam while URLs, e-mails, Arabic, punctuation and layout are kept.
  */
 export async function transliterateSmartPastedText(input: string): Promise<string> {
   if (!input) return input;
 
-  const source = convertMalayalamToArabiMalayalam(input)[0] ?? input;
+  const source = transliterateMalayalamText(input);
   const matches = [...source.matchAll(TOKEN_PATTERN)];
   const conversions = new Map<string, Promise<string>>();
 
-  for (const match of matches) {
-    const token = match[0];
-    if (/^(?:https?:\/\/|www\.)/i.test(token) || token.includes("@")) {
-      continue;
-    }
+  for (const [token] of matches) {
+    if (isLinkOrEmail(token)) continue;
     const key = normalizeRoman(token);
     if (!conversions.has(key)) {
       conversions.set(
@@ -625,26 +709,16 @@ export async function transliterateSmartPastedText(input: string): Promise<strin
     }),
   );
 
-  const pieces: string[] = [];
+  let output = "";
   let lastIndex = 0;
-
   for (const match of matches) {
     const token = match[0];
     const index = match.index ?? 0;
-
-    pieces.push(source.slice(lastIndex, index));
-
-    if (/^(?:https?:\/\/|www\.)/i.test(token) || token.includes("@")) {
-      pieces.push(token);
-    } else {
-      pieces.push(resolved.get(normalizeRoman(token)) ?? token);
-    }
-
+    output += source.slice(lastIndex, index);
+    output += isLinkOrEmail(token) ? token : (resolved.get(normalizeRoman(token)) ?? token);
     lastIndex = index + token.length;
   }
-
-  pieces.push(source.slice(lastIndex));
-  return pieces.join("");
+  return output + source.slice(lastIndex);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -652,18 +726,10 @@ export async function transliterateSmartPastedText(input: string): Promise<strin
 /* -------------------------------------------------------------------------- */
 
 /**
- * Example adapter for YOUR OWN backend.
+ * Adapter for your own backend (e.g. IndicXlit), keeping large models and
+ * datasets out of the browser. Expected response:
  *
- * Expected backend response:
- * {
- *   "candidates": [
- *     { "text": "ഞാൻ", "score": 1.0 },
- *     { "text": "ജാൻ", "score": 0.73 }
- *   ]
- * }
- *
- * On the server, connect this endpoint to IndicXlit or another Malayalam
- * transliteration model. This keeps large models/data out of your browser.
+ *   { "candidates": [{ "text": "ഞാൻ", "score": 1.0 }, { "text": "ജാൻ", "score": 0.73 }] }
  */
 export function createHttpMalayalamProvider(endpoint: string): MalayalamProvider {
   return async (roman, limit, context) => {
@@ -693,25 +759,3 @@ export function createHttpMalayalamProvider(endpoint: string): MalayalamProvider
     return Array.isArray(json.candidates) ? json.candidates.slice(0, limit) : [];
   };
 }
-
-/* -------------------------------------------------------------------------- */
-/*                          RECOMMENDED INITIALIZATION                         */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Example:
- *
- * loadUserPreferences();
- *
- * registerManglishLexicon([
- *   { roman: "njan", malayalam: "ഞാൻ", frequency: 50000 },
- *   { roman: "njaan", malayalam: "ഞാൻ", frequency: 30000 },
- *   { roman: "ente", malayalam: "എന്റെ", frequency: 80000 },
- * ]);
- *
- * setMalayalamProvider(
- *   createHttpMalayalamProvider("/api/transliterate/malayalam"),
- * );
- *
- * const candidates = await getSmartTransliterationCandidates("sugamano", 6);
- */

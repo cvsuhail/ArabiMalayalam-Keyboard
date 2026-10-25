@@ -2,7 +2,7 @@
 
 > ArabiMalayalam is a free, privacy-first online keyboard and transliterator for writing Malayalam in Arabi-Malayalam script. It accepts Manglish, Malayalam Unicode, and Arabic input, supports full sentences and paragraphs, and works as an installable offline Progressive Web App.
 
-Arabi-Malayalam (അറബി-മലയാളം / اَرَبِ مَلَیَالَمْ) is an adapted Arabic writing system used for Malayalam, especially in the Mappila literary tradition of Kerala's Malabar region. The keyboard provides ranked suggestions rather than semantic autocomplete. User documents and learned selections stay in browser storage unless an explicitly configured transliteration provider is used.
+Arabi-Malayalam (അറബി-മലയാളം / اَرَبِ مَلَيَاۻَمْ) is an adapted Arabic writing system used for Malayalam, especially in the Mappila literary tradition of Kerala's Malabar region. The keyboard provides ranked suggestions rather than semantic autocomplete. User documents and learned selections stay in browser storage unless an explicitly configured transliteration provider is used.
 
 ## Use the keyboard
 

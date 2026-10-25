@@ -1,4 +1,4 @@
-const CACHE_NAME = "arabimalayalam-v3";
+const CACHE_NAME = "arabimalayalam-v4";
 const STATIC_ASSETS = [
   "/",
   "/favicon.png",
@@ -7,6 +7,8 @@ const STATIC_ASSETS = [
   "/manifest.json",
   "/llms.txt",
   "/arabi-malayalam-guide.md",
+  // Word list that ranks suggestions; precached so offline typing ranks well.
+  "/lexicon/ml-words.txt",
 ];
 
 self.addEventListener("install", (event) => {

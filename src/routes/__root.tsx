@@ -117,7 +117,7 @@ const webAppSchema = {
     "Arabi Malayalam Keyboard",
     "Arabi-Malayalam Transliterator",
     "അറബി-മലയാളം കീബോർഡ്",
-    "اَرَبِ مَلَیَالَمْ",
+    "اَرَبِ مَلَيَاۻَمْ",
   ],
   url: `${SITE_URL}/`,
   image: SOCIAL_IMAGE_URL,
@@ -143,7 +143,7 @@ const webAppSchema = {
     "Real-time Manglish (English) to Arabi-Malayalam transliteration",
     "Direct Malayalam Unicode to Arabi-Malayalam script conversion",
     "Standard Arabic to Arabi-Malayalam script adaptation",
-    "Full Arabi-Malayalam phonetic alphabet support (ݧ, ڞ, ڰ, ڔ, ڶ, ڹ, etc.)",
+    "Full Arabi-Malayalam phonetic alphabet support (ڿ, ۼ, ڊ, ڗ, ڹ, ۻ, ژ, ۺ, ڔ, etc.)",
     "Short vowel diacritics support (e mark ٘ and o mark ٗ)",
     "PWA offline document editor with IndexedDB storage",
     "Speech-to-text Voice typing",
@@ -183,7 +183,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "keywords",
         content:
-          "arabi malayalam, arabi malayalam keyboard, arabi-malayalam transliteration, manglish to arabi malayalam, malayalam to arabi malayalam, arabic to arabi malayalam, mappila malayalam, arabi malayalam fonts, pwa keyboard, cvsuhail, അറബി മലയാളം, اَرَبِ مَلَیَالَمْ",
+          "arabi malayalam, arabi malayalam keyboard, arabi-malayalam transliteration, manglish to arabi malayalam, malayalam to arabi malayalam, arabic to arabi malayalam, mappila malayalam, arabi malayalam fonts, pwa keyboard, cvsuhail, അറബി മലയാളം, اَرَبِ مَلَيَاۻَمْ",
       },
       { name: "author", content: "CvSuhail" },
       {
@@ -283,11 +283,21 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch((err) => {
-        console.debug("SW registration info:", err);
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+    if (import.meta.env.DEV) {
+      // The worker answers from its cache first, which pins stale source modules
+      // during development. Remove one left behind by an earlier dev session.
+      void navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) void registration.unregister();
       });
+      void caches.keys().then((keys) => {
+        for (const key of keys) if (key.startsWith("arabimalayalam-")) void caches.delete(key);
+      });
+      return;
     }
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
+      console.debug("SW registration info:", err);
+    });
   }, []);
 
   return (

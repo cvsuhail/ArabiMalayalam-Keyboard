@@ -66,14 +66,14 @@ function AboutArabiMalayalam() {
               <tr>
                 <td>ഞ</td>
                 <td lang="ar" dir="rtl">
-                  ݧ
+                  ڿ
                 </td>
                 <td>nja</td>
               </tr>
               <tr>
                 <td>ങ</td>
                 <td lang="ar" dir="rtl">
-                  ڞ
+                  ۼ
                 </td>
                 <td>nga</td>
               </tr>
@@ -87,7 +87,7 @@ function AboutArabiMalayalam() {
               <tr>
                 <td>ള</td>
                 <td lang="ar" dir="rtl">
-                  ڶ
+                  ۻ
                 </td>
                 <td>lla</td>
               </tr>
@@ -97,6 +97,13 @@ function AboutArabiMalayalam() {
                   ڹ
                 </td>
                 <td>nna</td>
+              </tr>
+              <tr>
+                <td>ട</td>
+                <td lang="ar" dir="rtl">
+                  ڊ
+                </td>
+                <td>tta</td>
               </tr>
             </tbody>
           </table>

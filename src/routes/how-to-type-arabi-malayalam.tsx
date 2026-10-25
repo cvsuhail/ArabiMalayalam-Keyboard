@@ -78,7 +78,7 @@ function HowToTypeArabiMalayalam() {
         </li>
         <li>
           <strong>Select the best suggestion.</strong> Tap a candidate, press Enter or Space, or use
-          number keys 1–6.
+          number keys 1–9 (0 picks the tenth row).
         </li>
         <li>
           <strong>Copy or download.</strong> Your documents stay in the browser and remain available
