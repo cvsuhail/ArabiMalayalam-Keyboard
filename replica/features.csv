@@ -1,0 +1,30 @@
+feature,area,priority,original,clone,notes
+Sidebar with New File and documents grouped by day,sidebar,must,yes,no,already similar; keep Kattan Chai button at the bottom
+Rename and delete a document from the sidebar row,sidebar,must,yes,no,pencil and trash on hover
+Files stored only in this browser note and feedback button,sidebar,must,yes,no,
+Rich-text editor on a paper card,editor,must,yes,no,move from textarea to TipTap (already installed)
+Placeholder text in the empty editor,editor,must,yes,no,Arabi-Malayalam wording
+Suggestion popup under the word with numbered rows,editor,must,yes,no,keep our Malayalam reading line and nine rows
+Undo and redo,toolbar,must,yes,no,
+Font family menu with names drawn in their own font,toolbar,must,yes,no,Arabic fonts; links to the fonts page
+Font size stepper,toolbar,must,yes,no,
+Bold italic underline on the selection,toolbar,must,yes,no,
+Text colour picker,toolbar,must,yes,no,10x8 swatch grid
+Highlight colour picker,toolbar,must,yes,no,
+Alignment popover (left centre right justify),toolbar,must,yes,no,right-to-left aware
+Bulleted and numbered lists,toolbar,must,yes,no,
+Voice typing button,dock,must,yes,no,
+Copy split button (text only / with styles / legacy code),dock,must,yes,no,Copy as AML instead of Copy as FML
+Language toggle (Arabi-Malayalam / English),dock,should,yes,no,English types Latin as-is
+Language switch shortcut (Cmd/Ctrl+L),settings,should,yes,no,
+Settings menu (dark theme / word suggestions / shortcut),settings,should,yes,no,
+Dark theme,settings,should,yes,no,
+Show word suggestions toggle,settings,should,yes,no,
+Print,toolbar,should,yes,no,
+Feedback from the settings menu,settings,should,yes,no,
+About from the settings menu,settings,should,yes,no,link to the About page
+Day grouping beyond Today (Yesterday / earlier),sidebar,could,yes,no,
+Phone layout,layout,could,unknown,no,not observed; keep the current drawer and dock
+Image insert,toolbar,skip,yes,skip,not wanted
+Table insert,toolbar,skip,yes,skip,not wanted
+Copy as FML,dock,skip,yes,skip,Malayalam-only legacy code; replaced by AML
