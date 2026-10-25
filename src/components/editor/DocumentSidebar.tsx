@@ -134,13 +134,22 @@ export function DocumentSidebar({
       </div>
 
       <div className="flex flex-col gap-2 border-t border-sidebar-border p-3 text-center">
-        <Link
-          to="/about-arabi-malayalam"
-          onClick={onNavigate}
-          className="rounded-md py-1 text-xs font-semibold text-primary hover:underline"
-        >
-          About &amp; typing guide
-        </Link>
+        <div className="flex flex-wrap justify-center gap-x-3">
+          <Link
+            to="/about-arabi-malayalam"
+            onClick={onNavigate}
+            className="rounded-md py-1 text-xs font-semibold text-primary hover:underline"
+          >
+            About &amp; typing guide
+          </Link>
+          <Link
+            to="/alphabet"
+            onClick={onNavigate}
+            className="rounded-md py-1 text-xs font-semibold text-primary hover:underline"
+          >
+            Alphabet
+          </Link>
+        </div>
         <p className="text-[11px] leading-tight text-muted-foreground">
           Your files are stored only in this browser
         </p>

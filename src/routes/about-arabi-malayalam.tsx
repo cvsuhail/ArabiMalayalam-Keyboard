@@ -118,8 +118,9 @@ function AboutArabiMalayalam() {
           <code>povaam</code> receive contextual Arabi-Malayalam suggestions while you type.
         </p>
         <p>
-          <Link to="/how-to-type-arabi-malayalam">Read the step-by-step typing guide</Link>, or open
-          the editor and begin writing immediately.
+          <Link to="/how-to-type-arabi-malayalam">Read the step-by-step typing guide</Link>, see
+          every letter in the <Link to="/alphabet">alphabet and spelling guide</Link>, or open the
+          editor and begin writing immediately.
         </p>
       </section>
 
@@ -129,6 +130,9 @@ function AboutArabiMalayalam() {
         </Link>
         <Link to="/how-to-type-arabi-malayalam" className="seo-secondary-link">
           How to type Arabi-Malayalam
+        </Link>
+        <Link to="/alphabet" className="seo-secondary-link">
+          Alphabet guide
         </Link>
       </div>
     </SeoArticleLayout>

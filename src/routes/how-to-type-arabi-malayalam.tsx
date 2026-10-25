@@ -156,6 +156,9 @@ function HowToTypeArabiMalayalam() {
         <Link to="/about-arabi-malayalam" className="seo-secondary-link">
           Learn about the script
         </Link>
+        <Link to="/alphabet" className="seo-secondary-link">
+          Alphabet guide
+        </Link>
       </div>
     </SeoArticleLayout>
   );

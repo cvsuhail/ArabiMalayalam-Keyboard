@@ -9,6 +9,7 @@ Arabi-Malayalam (അറബി-മലയാളം / اَرَبِ مَلَيَاۻ
 - [Open the Arabi-Malayalam keyboard](https://arabi-malayalam.cvsuhail.online/): Type or paste Manglish, Malayalam, or Arabic and receive Arabi-Malayalam suggestions.
 - [How to type Arabi-Malayalam](https://arabi-malayalam.cvsuhail.online/how-to-type-arabi-malayalam): Step-by-step instructions, common Manglish examples, paragraph paste, and mobile installation.
 - [What is Arabi-Malayalam?](https://arabi-malayalam.cvsuhail.online/about-arabi-malayalam): Concise background, representative letters, and an explanation of the script.
+- [Arabi-Malayalam alphabet and spelling guide](https://arabi-malayalam.cvsuhail.online/alphabet): Every letter, the 13 letters added to Arabic, vowel signs, a full syllable chart and spelling rules, generated from the keyboard's own tables.
 
 ## Machine-readable resources
 

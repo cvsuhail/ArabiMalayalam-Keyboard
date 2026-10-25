@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Copy, Download } from "lucide-react";
 import { toast } from "sonner";
+import { SiteHeader } from "../components/SiteHeader";
 import { Button } from "../components/ui/button";
 import { toArmlDetailed } from "../lib/arml";
 
@@ -89,17 +90,7 @@ function FontsPage() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <style>{fontFaces}</style>
-      <header className="sticky top-0 z-20 border-b border-border bg-card/90 px-4 py-3 backdrop-blur-xl sm:px-6">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-2 rounded-xl font-extrabold">
-            <img src="/favicon.png" alt="" className="size-9 rounded-xl" />
-            <span>ArabiMalayalam</span>
-          </Link>
-          <Button asChild>
-            <Link to="/">Open keyboard</Link>
-          </Button>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
         <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-primary">ARML</p>

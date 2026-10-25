@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutArabiMalayalamRouteImport } from './routes/about-arabi-malayalam'
+import { Route as AlphabetRouteImport } from './routes/alphabet'
 import { Route as FontsRouteImport } from './routes/fonts'
 import { Route as HowToTypeArabiMalayalamRouteImport } from './routes/how-to-type-arabi-malayalam'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutArabiMalayalamRoute = AboutArabiMalayalamRouteImport.update({
   id: '/about-arabi-malayalam',
   path: '/about-arabi-malayalam',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlphabetRoute = AlphabetRouteImport.update({
+  id: '/alphabet',
+  path: '/alphabet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FontsRoute = FontsRouteImport.update({
@@ -38,12 +44,14 @@ const HowToTypeArabiMalayalamRoute = HowToTypeArabiMalayalamRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about-arabi-malayalam': typeof AboutArabiMalayalamRoute
+  '/alphabet': typeof AlphabetRoute
   '/fonts': typeof FontsRoute
   '/how-to-type-arabi-malayalam': typeof HowToTypeArabiMalayalamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about-arabi-malayalam': typeof AboutArabiMalayalamRoute
+  '/alphabet': typeof AlphabetRoute
   '/fonts': typeof FontsRoute
   '/how-to-type-arabi-malayalam': typeof HowToTypeArabiMalayalamRoute
 }
@@ -51,19 +59,30 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about-arabi-malayalam': typeof AboutArabiMalayalamRoute
+  '/alphabet': typeof AlphabetRoute
   '/fonts': typeof FontsRoute
   '/how-to-type-arabi-malayalam': typeof HowToTypeArabiMalayalamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/about-arabi-malayalam' | '/fonts' | '/how-to-type-arabi-malayalam'
+    | '/'
+    | '/about-arabi-malayalam'
+    | '/alphabet'
+    | '/fonts'
+    | '/how-to-type-arabi-malayalam'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about-arabi-malayalam' | '/fonts' | '/how-to-type-arabi-malayalam'
+  to:
+    | '/'
+    | '/about-arabi-malayalam'
+    | '/alphabet'
+    | '/fonts'
+    | '/how-to-type-arabi-malayalam'
   id:
     | '__root__'
     | '/'
     | '/about-arabi-malayalam'
+    | '/alphabet'
     | '/fonts'
     | '/how-to-type-arabi-malayalam'
   fileRoutesById: FileRoutesById
@@ -71,6 +90,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutArabiMalayalamRoute: typeof AboutArabiMalayalamRoute
+  AlphabetRoute: typeof AlphabetRoute
   FontsRoute: typeof FontsRoute
   HowToTypeArabiMalayalamRoute: typeof HowToTypeArabiMalayalamRoute
 }
@@ -89,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/about-arabi-malayalam'
       fullPath: '/about-arabi-malayalam'
       preLoaderRoute: typeof AboutArabiMalayalamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alphabet': {
+      id: '/alphabet'
+      path: '/alphabet'
+      fullPath: '/alphabet'
+      preLoaderRoute: typeof AlphabetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fonts': {
@@ -111,6 +138,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutArabiMalayalamRoute: AboutArabiMalayalamRoute,
+  AlphabetRoute: AlphabetRoute,
   FontsRoute: FontsRoute,
   HowToTypeArabiMalayalamRoute: HowToTypeArabiMalayalamRoute,
 }
