@@ -253,7 +253,8 @@ function ArabiMalayalamEditor() {
         TextStyle,
         Color,
         FontSize,
-        Highlight.configure({ multicolor: true }),
+        // Typing right after highlighted text should not extend the highlight.
+        Highlight.extend({ inclusive: false }).configure({ multicolor: true }),
         Placeholder.configure({
           placeholder: () =>
             settingsRef.current.inputLanguage === "english"
