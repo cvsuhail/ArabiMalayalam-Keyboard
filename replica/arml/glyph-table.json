@@ -1,0 +1,1896 @@
+[
+  {
+    "name": "uni0628.isol",
+    "unicode": [
+      "U+0628"
+    ],
+    "form": "isol",
+    "code": 35,
+    "hex": "0x23",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0628.init",
+    "unicode": [
+      "U+0628"
+    ],
+    "form": "init",
+    "code": 36,
+    "hex": "0x24",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0628.medi",
+    "unicode": [
+      "U+0628"
+    ],
+    "form": "medi",
+    "code": 37,
+    "hex": "0x25",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0628.fina",
+    "unicode": [
+      "U+0628"
+    ],
+    "form": "fina",
+    "code": 38,
+    "hex": "0x26",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni067E.isol",
+    "unicode": [
+      "U+067E"
+    ],
+    "form": "isol",
+    "code": 42,
+    "hex": "0x2A",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni067E.init",
+    "unicode": [
+      "U+067E"
+    ],
+    "form": "init",
+    "code": 43,
+    "hex": "0x2B",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni067E.medi",
+    "unicode": [
+      "U+067E"
+    ],
+    "form": "medi",
+    "code": 60,
+    "hex": "0x3C",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni067E.fina",
+    "unicode": [
+      "U+067E"
+    ],
+    "form": "fina",
+    "code": 61,
+    "hex": "0x3D",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062A.isol",
+    "unicode": [
+      "U+062A"
+    ],
+    "form": "isol",
+    "code": 62,
+    "hex": "0x3E",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062A.init",
+    "unicode": [
+      "U+062A"
+    ],
+    "form": "init",
+    "code": 64,
+    "hex": "0x40",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062A.medi",
+    "unicode": [
+      "U+062A"
+    ],
+    "form": "medi",
+    "code": 65,
+    "hex": "0x41",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062A.fina",
+    "unicode": [
+      "U+062A"
+    ],
+    "form": "fina",
+    "code": 66,
+    "hex": "0x42",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062B.isol",
+    "unicode": [
+      "U+062B"
+    ],
+    "form": "isol",
+    "code": 67,
+    "hex": "0x43",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062B.init",
+    "unicode": [
+      "U+062B"
+    ],
+    "form": "init",
+    "code": 68,
+    "hex": "0x44",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062B.medi",
+    "unicode": [
+      "U+062B"
+    ],
+    "form": "medi",
+    "code": 69,
+    "hex": "0x45",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062B.fina",
+    "unicode": [
+      "U+062B"
+    ],
+    "form": "fina",
+    "code": 70,
+    "hex": "0x46",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062C.isol",
+    "unicode": [
+      "U+062C"
+    ],
+    "form": "isol",
+    "code": 71,
+    "hex": "0x47",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062C.init",
+    "unicode": [
+      "U+062C"
+    ],
+    "form": "init",
+    "code": 72,
+    "hex": "0x48",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062C.medi",
+    "unicode": [
+      "U+062C"
+    ],
+    "form": "medi",
+    "code": 73,
+    "hex": "0x49",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062C.fina",
+    "unicode": [
+      "U+062C"
+    ],
+    "form": "fina",
+    "code": 74,
+    "hex": "0x4A",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0686.isol",
+    "unicode": [
+      "U+0686"
+    ],
+    "form": "isol",
+    "code": 75,
+    "hex": "0x4B",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0686.init",
+    "unicode": [
+      "U+0686"
+    ],
+    "form": "init",
+    "code": 76,
+    "hex": "0x4C",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0686.medi",
+    "unicode": [
+      "U+0686"
+    ],
+    "form": "medi",
+    "code": 77,
+    "hex": "0x4D",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0686.fina",
+    "unicode": [
+      "U+0686"
+    ],
+    "form": "fina",
+    "code": 78,
+    "hex": "0x4E",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062D.isol",
+    "unicode": [
+      "U+062D"
+    ],
+    "form": "isol",
+    "code": 79,
+    "hex": "0x4F",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062D.init",
+    "unicode": [
+      "U+062D"
+    ],
+    "form": "init",
+    "code": 80,
+    "hex": "0x50",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062D.medi",
+    "unicode": [
+      "U+062D"
+    ],
+    "form": "medi",
+    "code": 81,
+    "hex": "0x51",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062D.fina",
+    "unicode": [
+      "U+062D"
+    ],
+    "form": "fina",
+    "code": 82,
+    "hex": "0x52",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062E.isol",
+    "unicode": [
+      "U+062E"
+    ],
+    "form": "isol",
+    "code": 83,
+    "hex": "0x53",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062E.init",
+    "unicode": [
+      "U+062E"
+    ],
+    "form": "init",
+    "code": 84,
+    "hex": "0x54",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062E.medi",
+    "unicode": [
+      "U+062E"
+    ],
+    "form": "medi",
+    "code": 85,
+    "hex": "0x55",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062E.fina",
+    "unicode": [
+      "U+062E"
+    ],
+    "form": "fina",
+    "code": 86,
+    "hex": "0x56",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0633.isol",
+    "unicode": [
+      "U+0633"
+    ],
+    "form": "isol",
+    "code": 87,
+    "hex": "0x57",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0633.init",
+    "unicode": [
+      "U+0633"
+    ],
+    "form": "init",
+    "code": 88,
+    "hex": "0x58",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0633.medi",
+    "unicode": [
+      "U+0633"
+    ],
+    "form": "medi",
+    "code": 89,
+    "hex": "0x59",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0633.fina",
+    "unicode": [
+      "U+0633"
+    ],
+    "form": "fina",
+    "code": 90,
+    "hex": "0x5A",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0634.isol",
+    "unicode": [
+      "U+0634"
+    ],
+    "form": "isol",
+    "code": 91,
+    "hex": "0x5B",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0634.init",
+    "unicode": [
+      "U+0634"
+    ],
+    "form": "init",
+    "code": 92,
+    "hex": "0x5C",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0634.medi",
+    "unicode": [
+      "U+0634"
+    ],
+    "form": "medi",
+    "code": 93,
+    "hex": "0x5D",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0634.fina",
+    "unicode": [
+      "U+0634"
+    ],
+    "form": "fina",
+    "code": 94,
+    "hex": "0x5E",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0635.isol",
+    "unicode": [
+      "U+0635"
+    ],
+    "form": "isol",
+    "code": 95,
+    "hex": "0x5F",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0635.init",
+    "unicode": [
+      "U+0635"
+    ],
+    "form": "init",
+    "code": 96,
+    "hex": "0x60",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0635.medi",
+    "unicode": [
+      "U+0635"
+    ],
+    "form": "medi",
+    "code": 97,
+    "hex": "0x61",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0635.fina",
+    "unicode": [
+      "U+0635"
+    ],
+    "form": "fina",
+    "code": 98,
+    "hex": "0x62",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0636.isol",
+    "unicode": [
+      "U+0636"
+    ],
+    "form": "isol",
+    "code": 99,
+    "hex": "0x63",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0636.init",
+    "unicode": [
+      "U+0636"
+    ],
+    "form": "init",
+    "code": 100,
+    "hex": "0x64",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0636.medi",
+    "unicode": [
+      "U+0636"
+    ],
+    "form": "medi",
+    "code": 101,
+    "hex": "0x65",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0636.fina",
+    "unicode": [
+      "U+0636"
+    ],
+    "form": "fina",
+    "code": 102,
+    "hex": "0x66",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0637.isol",
+    "unicode": [
+      "U+0637"
+    ],
+    "form": "isol",
+    "code": 103,
+    "hex": "0x67",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0637.init",
+    "unicode": [
+      "U+0637"
+    ],
+    "form": "init",
+    "code": 104,
+    "hex": "0x68",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0637.medi",
+    "unicode": [
+      "U+0637"
+    ],
+    "form": "medi",
+    "code": 105,
+    "hex": "0x69",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0637.fina",
+    "unicode": [
+      "U+0637"
+    ],
+    "form": "fina",
+    "code": 106,
+    "hex": "0x6A",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0638.isol",
+    "unicode": [
+      "U+0638"
+    ],
+    "form": "isol",
+    "code": 107,
+    "hex": "0x6B",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0638.init",
+    "unicode": [
+      "U+0638"
+    ],
+    "form": "init",
+    "code": 108,
+    "hex": "0x6C",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0638.medi",
+    "unicode": [
+      "U+0638"
+    ],
+    "form": "medi",
+    "code": 109,
+    "hex": "0x6D",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0638.fina",
+    "unicode": [
+      "U+0638"
+    ],
+    "form": "fina",
+    "code": 110,
+    "hex": "0x6E",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0639.isol",
+    "unicode": [
+      "U+0639"
+    ],
+    "form": "isol",
+    "code": 111,
+    "hex": "0x6F",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0639.init",
+    "unicode": [
+      "U+0639"
+    ],
+    "form": "init",
+    "code": 112,
+    "hex": "0x70",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0639.medi",
+    "unicode": [
+      "U+0639"
+    ],
+    "form": "medi",
+    "code": 113,
+    "hex": "0x71",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0639.fina",
+    "unicode": [
+      "U+0639"
+    ],
+    "form": "fina",
+    "code": 114,
+    "hex": "0x72",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni063A.isol",
+    "unicode": [
+      "U+063A"
+    ],
+    "form": "isol",
+    "code": 115,
+    "hex": "0x73",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni063A.init",
+    "unicode": [
+      "U+063A"
+    ],
+    "form": "init",
+    "code": 116,
+    "hex": "0x74",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni063A.medi",
+    "unicode": [
+      "U+063A"
+    ],
+    "form": "medi",
+    "code": 117,
+    "hex": "0x75",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni063A.fina",
+    "unicode": [
+      "U+063A"
+    ],
+    "form": "fina",
+    "code": 118,
+    "hex": "0x76",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0641.isol",
+    "unicode": [
+      "U+0641"
+    ],
+    "form": "isol",
+    "code": 119,
+    "hex": "0x77",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0641.init",
+    "unicode": [
+      "U+0641"
+    ],
+    "form": "init",
+    "code": 120,
+    "hex": "0x78",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0641.medi",
+    "unicode": [
+      "U+0641"
+    ],
+    "form": "medi",
+    "code": 121,
+    "hex": "0x79",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0641.fina",
+    "unicode": [
+      "U+0641"
+    ],
+    "form": "fina",
+    "code": 122,
+    "hex": "0x7A",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0642.isol",
+    "unicode": [
+      "U+0642"
+    ],
+    "form": "isol",
+    "code": 123,
+    "hex": "0x7B",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0642.init",
+    "unicode": [
+      "U+0642"
+    ],
+    "form": "init",
+    "code": 124,
+    "hex": "0x7C",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0642.medi",
+    "unicode": [
+      "U+0642"
+    ],
+    "form": "medi",
+    "code": 125,
+    "hex": "0x7D",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0642.fina",
+    "unicode": [
+      "U+0642"
+    ],
+    "form": "fina",
+    "code": 126,
+    "hex": "0x7E",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0643.isol",
+    "unicode": [
+      "U+0643"
+    ],
+    "form": "isol",
+    "code": 128,
+    "hex": "0x80",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0643.init",
+    "unicode": [
+      "U+0643"
+    ],
+    "form": "init",
+    "code": 130,
+    "hex": "0x82",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0643.medi",
+    "unicode": [
+      "U+0643"
+    ],
+    "form": "medi",
+    "code": 131,
+    "hex": "0x83",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0643.fina",
+    "unicode": [
+      "U+0643"
+    ],
+    "form": "fina",
+    "code": 132,
+    "hex": "0x84",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06AF.isol",
+    "unicode": [
+      "U+06AF"
+    ],
+    "form": "isol",
+    "code": 133,
+    "hex": "0x85",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06AF.init",
+    "unicode": [
+      "U+06AF"
+    ],
+    "form": "init",
+    "code": 134,
+    "hex": "0x86",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06AF.medi",
+    "unicode": [
+      "U+06AF"
+    ],
+    "form": "medi",
+    "code": 135,
+    "hex": "0x87",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06AF.fina",
+    "unicode": [
+      "U+06AF"
+    ],
+    "form": "fina",
+    "code": 136,
+    "hex": "0x88",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0644.isol",
+    "unicode": [
+      "U+0644"
+    ],
+    "form": "isol",
+    "code": 137,
+    "hex": "0x89",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0644.init",
+    "unicode": [
+      "U+0644"
+    ],
+    "form": "init",
+    "code": 138,
+    "hex": "0x8A",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0644.medi",
+    "unicode": [
+      "U+0644"
+    ],
+    "form": "medi",
+    "code": 139,
+    "hex": "0x8B",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0644.fina",
+    "unicode": [
+      "U+0644"
+    ],
+    "form": "fina",
+    "code": 140,
+    "hex": "0x8C",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0645.isol",
+    "unicode": [
+      "U+0645"
+    ],
+    "form": "isol",
+    "code": 142,
+    "hex": "0x8E",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0645.init",
+    "unicode": [
+      "U+0645"
+    ],
+    "form": "init",
+    "code": 145,
+    "hex": "0x91",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0645.medi",
+    "unicode": [
+      "U+0645"
+    ],
+    "form": "medi",
+    "code": 146,
+    "hex": "0x92",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0645.fina",
+    "unicode": [
+      "U+0645"
+    ],
+    "form": "fina",
+    "code": 147,
+    "hex": "0x93",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0646.isol",
+    "unicode": [
+      "U+0646"
+    ],
+    "form": "isol",
+    "code": 148,
+    "hex": "0x94",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0646.init",
+    "unicode": [
+      "U+0646"
+    ],
+    "form": "init",
+    "code": 149,
+    "hex": "0x95",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0646.medi",
+    "unicode": [
+      "U+0646"
+    ],
+    "form": "medi",
+    "code": 150,
+    "hex": "0x96",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0646.fina",
+    "unicode": [
+      "U+0646"
+    ],
+    "form": "fina",
+    "code": 151,
+    "hex": "0x97",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0647.isol",
+    "unicode": [
+      "U+0647"
+    ],
+    "form": "isol",
+    "code": 152,
+    "hex": "0x98",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0647.init",
+    "unicode": [
+      "U+0647"
+    ],
+    "form": "init",
+    "code": 153,
+    "hex": "0x99",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0647.medi",
+    "unicode": [
+      "U+0647"
+    ],
+    "form": "medi",
+    "code": 154,
+    "hex": "0x9A",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0647.fina",
+    "unicode": [
+      "U+0647"
+    ],
+    "form": "fina",
+    "code": 155,
+    "hex": "0x9B",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06BE.isol",
+    "unicode": [
+      "U+06BE"
+    ],
+    "form": "isol",
+    "code": 156,
+    "hex": "0x9C",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06BE.init",
+    "unicode": [
+      "U+06BE"
+    ],
+    "form": "init",
+    "code": 158,
+    "hex": "0x9E",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06BE.medi",
+    "unicode": [
+      "U+06BE"
+    ],
+    "form": "medi",
+    "code": 159,
+    "hex": "0x9F",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06BE.fina",
+    "unicode": [
+      "U+06BE"
+    ],
+    "form": "fina",
+    "code": 161,
+    "hex": "0xA1",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni064A.isol",
+    "unicode": [
+      "U+064A"
+    ],
+    "form": "isol",
+    "code": 162,
+    "hex": "0xA2",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni064A.init",
+    "unicode": [
+      "U+064A"
+    ],
+    "form": "init",
+    "code": 163,
+    "hex": "0xA3",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni064A.medi",
+    "unicode": [
+      "U+064A"
+    ],
+    "form": "medi",
+    "code": 164,
+    "hex": "0xA4",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni064A.fina",
+    "unicode": [
+      "U+064A"
+    ],
+    "form": "fina",
+    "code": 165,
+    "hex": "0xA5",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0626.isol",
+    "unicode": [
+      "U+0626"
+    ],
+    "form": "isol",
+    "code": 166,
+    "hex": "0xA6",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0626.init",
+    "unicode": [
+      "U+0626"
+    ],
+    "form": "init",
+    "code": 167,
+    "hex": "0xA7",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0626.medi",
+    "unicode": [
+      "U+0626"
+    ],
+    "form": "medi",
+    "code": 168,
+    "hex": "0xA8",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0626.fina",
+    "unicode": [
+      "U+0626"
+    ],
+    "form": "fina",
+    "code": 169,
+    "hex": "0xA9",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06BF.isol",
+    "unicode": [
+      "U+06BF"
+    ],
+    "form": "isol",
+    "code": 170,
+    "hex": "0xAA",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06BF.init",
+    "unicode": [
+      "U+06BF"
+    ],
+    "form": "init",
+    "code": 171,
+    "hex": "0xAB",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06BF.medi",
+    "unicode": [
+      "U+06BF"
+    ],
+    "form": "medi",
+    "code": 172,
+    "hex": "0xAC",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06BF.fina",
+    "unicode": [
+      "U+06BF"
+    ],
+    "form": "fina",
+    "code": 174,
+    "hex": "0xAE",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FC.isol",
+    "unicode": [
+      "U+06FC"
+    ],
+    "form": "isol",
+    "code": 175,
+    "hex": "0xAF",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FC.init",
+    "unicode": [
+      "U+06FC"
+    ],
+    "form": "init",
+    "code": 176,
+    "hex": "0xB0",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FC.medi",
+    "unicode": [
+      "U+06FC"
+    ],
+    "form": "medi",
+    "code": 177,
+    "hex": "0xB1",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FC.fina",
+    "unicode": [
+      "U+06FC"
+    ],
+    "form": "fina",
+    "code": 178,
+    "hex": "0xB2",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06B9.isol",
+    "unicode": [
+      "U+06B9"
+    ],
+    "form": "isol",
+    "code": 179,
+    "hex": "0xB3",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06B9.init",
+    "unicode": [
+      "U+06B9"
+    ],
+    "form": "init",
+    "code": 180,
+    "hex": "0xB4",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06B9.medi",
+    "unicode": [
+      "U+06B9"
+    ],
+    "form": "medi",
+    "code": 181,
+    "hex": "0xB5",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06B9.fina",
+    "unicode": [
+      "U+06B9"
+    ],
+    "form": "fina",
+    "code": 182,
+    "hex": "0xB6",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FB.isol",
+    "unicode": [
+      "U+06FB"
+    ],
+    "form": "isol",
+    "code": 183,
+    "hex": "0xB7",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FB.init",
+    "unicode": [
+      "U+06FB"
+    ],
+    "form": "init",
+    "code": 184,
+    "hex": "0xB8",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FB.medi",
+    "unicode": [
+      "U+06FB"
+    ],
+    "form": "medi",
+    "code": 185,
+    "hex": "0xB9",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FB.fina",
+    "unicode": [
+      "U+06FB"
+    ],
+    "form": "fina",
+    "code": 186,
+    "hex": "0xBA",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FA.isol",
+    "unicode": [
+      "U+06FA"
+    ],
+    "form": "isol",
+    "code": 187,
+    "hex": "0xBB",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FA.init",
+    "unicode": [
+      "U+06FA"
+    ],
+    "form": "init",
+    "code": 188,
+    "hex": "0xBC",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FA.medi",
+    "unicode": [
+      "U+06FA"
+    ],
+    "form": "medi",
+    "code": 189,
+    "hex": "0xBD",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06FA.fina",
+    "unicode": [
+      "U+06FA"
+    ],
+    "form": "fina",
+    "code": 190,
+    "hex": "0xBE",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0627.isol",
+    "unicode": [
+      "U+0627"
+    ],
+    "form": "isol",
+    "code": 191,
+    "hex": "0xBF",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0627.fina",
+    "unicode": [
+      "U+0627"
+    ],
+    "form": "fina",
+    "code": 192,
+    "hex": "0xC0",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0622.isol",
+    "unicode": [
+      "U+0622"
+    ],
+    "form": "isol",
+    "code": 193,
+    "hex": "0xC1",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0622.fina",
+    "unicode": [
+      "U+0622"
+    ],
+    "form": "fina",
+    "code": 194,
+    "hex": "0xC2",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0623.isol",
+    "unicode": [
+      "U+0623"
+    ],
+    "form": "isol",
+    "code": 195,
+    "hex": "0xC3",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0623.fina",
+    "unicode": [
+      "U+0623"
+    ],
+    "form": "fina",
+    "code": 196,
+    "hex": "0xC4",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0625.isol",
+    "unicode": [
+      "U+0625"
+    ],
+    "form": "isol",
+    "code": 197,
+    "hex": "0xC5",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0625.fina",
+    "unicode": [
+      "U+0625"
+    ],
+    "form": "fina",
+    "code": 198,
+    "hex": "0xC6",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0624.isol",
+    "unicode": [
+      "U+0624"
+    ],
+    "form": "isol",
+    "code": 199,
+    "hex": "0xC7",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0624.fina",
+    "unicode": [
+      "U+0624"
+    ],
+    "form": "fina",
+    "code": 200,
+    "hex": "0xC8",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0629.isol",
+    "unicode": [
+      "U+0629"
+    ],
+    "form": "isol",
+    "code": 201,
+    "hex": "0xC9",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0629.fina",
+    "unicode": [
+      "U+0629"
+    ],
+    "form": "fina",
+    "code": 202,
+    "hex": "0xCA",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062F.isol",
+    "unicode": [
+      "U+062F"
+    ],
+    "form": "isol",
+    "code": 203,
+    "hex": "0xCB",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni062F.fina",
+    "unicode": [
+      "U+062F"
+    ],
+    "form": "fina",
+    "code": 204,
+    "hex": "0xCC",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0630.isol",
+    "unicode": [
+      "U+0630"
+    ],
+    "form": "isol",
+    "code": 205,
+    "hex": "0xCD",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0630.fina",
+    "unicode": [
+      "U+0630"
+    ],
+    "form": "fina",
+    "code": 206,
+    "hex": "0xCE",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0631.isol",
+    "unicode": [
+      "U+0631"
+    ],
+    "form": "isol",
+    "code": 207,
+    "hex": "0xCF",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0631.fina",
+    "unicode": [
+      "U+0631"
+    ],
+    "form": "fina",
+    "code": 208,
+    "hex": "0xD0",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0632.isol",
+    "unicode": [
+      "U+0632"
+    ],
+    "form": "isol",
+    "code": 209,
+    "hex": "0xD1",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0632.fina",
+    "unicode": [
+      "U+0632"
+    ],
+    "form": "fina",
+    "code": 210,
+    "hex": "0xD2",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0648.isol",
+    "unicode": [
+      "U+0648"
+    ],
+    "form": "isol",
+    "code": 211,
+    "hex": "0xD3",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0648.fina",
+    "unicode": [
+      "U+0648"
+    ],
+    "form": "fina",
+    "code": 212,
+    "hex": "0xD4",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni068A.isol",
+    "unicode": [
+      "U+068A"
+    ],
+    "form": "isol",
+    "code": 213,
+    "hex": "0xD5",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni068A.fina",
+    "unicode": [
+      "U+068A"
+    ],
+    "form": "fina",
+    "code": 214,
+    "hex": "0xD6",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0697.isol",
+    "unicode": [
+      "U+0697"
+    ],
+    "form": "isol",
+    "code": 215,
+    "hex": "0xD7",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0697.fina",
+    "unicode": [
+      "U+0697"
+    ],
+    "form": "fina",
+    "code": 216,
+    "hex": "0xD8",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0694.isol",
+    "unicode": [
+      "U+0694"
+    ],
+    "form": "isol",
+    "code": 217,
+    "hex": "0xD9",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0694.fina",
+    "unicode": [
+      "U+0694"
+    ],
+    "form": "fina",
+    "code": 218,
+    "hex": "0xDA",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0698.isol",
+    "unicode": [
+      "U+0698"
+    ],
+    "form": "isol",
+    "code": 219,
+    "hex": "0xDB",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0698.fina",
+    "unicode": [
+      "U+0698"
+    ],
+    "form": "fina",
+    "code": 220,
+    "hex": "0xDC",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0621.isol",
+    "unicode": [
+      "U+0621"
+    ],
+    "form": "isol",
+    "code": 221,
+    "hex": "0xDD",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni064E",
+    "unicode": [
+      "U+064E"
+    ],
+    "form": "mark",
+    "code": 222,
+    "hex": "0xDE",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0650",
+    "unicode": [
+      "U+0650"
+    ],
+    "form": "mark",
+    "code": 223,
+    "hex": "0xDF",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni064F",
+    "unicode": [
+      "U+064F"
+    ],
+    "form": "mark",
+    "code": 224,
+    "hex": "0xE0",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0652",
+    "unicode": [
+      "U+0652"
+    ],
+    "form": "mark",
+    "code": 225,
+    "hex": "0xE1",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0651",
+    "unicode": [
+      "U+0651"
+    ],
+    "form": "mark",
+    "code": 226,
+    "hex": "0xE2",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0658",
+    "unicode": [
+      "U+0658"
+    ],
+    "form": "mark",
+    "code": 227,
+    "hex": "0xE3",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0657",
+    "unicode": [
+      "U+0657"
+    ],
+    "form": "mark",
+    "code": 228,
+    "hex": "0xE4",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni064B",
+    "unicode": [
+      "U+064B"
+    ],
+    "form": "mark",
+    "code": 229,
+    "hex": "0xE5",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni064C",
+    "unicode": [
+      "U+064C"
+    ],
+    "form": "mark",
+    "code": 230,
+    "hex": "0xE6",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni064D",
+    "unicode": [
+      "U+064D"
+    ],
+    "form": "mark",
+    "code": 231,
+    "hex": "0xE7",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0670",
+    "unicode": [
+      "U+0670"
+    ],
+    "form": "mark",
+    "code": 232,
+    "hex": "0xE8",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0651_064E",
+    "unicode": [
+      "U+0651",
+      "U+064E"
+    ],
+    "form": "mark",
+    "code": 233,
+    "hex": "0xE9",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0651_064F",
+    "unicode": [
+      "U+0651",
+      "U+064F"
+    ],
+    "form": "mark",
+    "code": 234,
+    "hex": "0xEA",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0651_0658",
+    "unicode": [
+      "U+0651",
+      "U+0658"
+    ],
+    "form": "mark",
+    "code": 235,
+    "hex": "0xEB",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni0651_0657",
+    "unicode": [
+      "U+0651",
+      "U+0657"
+    ],
+    "form": "mark",
+    "code": 236,
+    "hex": "0xEC",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni060C",
+    "unicode": [
+      "U+060C"
+    ],
+    "form": "symbol",
+    "code": 237,
+    "hex": "0xED",
+    "direction": "neutral"
+  },
+  {
+    "name": "uni061B",
+    "unicode": [
+      "U+061B"
+    ],
+    "form": "symbol",
+    "code": 238,
+    "hex": "0xEE",
+    "direction": "neutral"
+  },
+  {
+    "name": "uni061F",
+    "unicode": [
+      "U+061F"
+    ],
+    "form": "symbol",
+    "code": 239,
+    "hex": "0xEF",
+    "direction": "neutral"
+  },
+  {
+    "name": "uni06D4",
+    "unicode": [
+      "U+06D4"
+    ],
+    "form": "symbol",
+    "code": 240,
+    "hex": "0xF0",
+    "direction": "neutral"
+  },
+  {
+    "name": "uniFDFA",
+    "unicode": [
+      "U+FDFA"
+    ],
+    "form": "symbol",
+    "code": 241,
+    "hex": "0xF1",
+    "direction": "rtl"
+  },
+  {
+    "name": "uni06F0",
+    "unicode": [
+      "U+06F0"
+    ],
+    "form": "digit",
+    "code": 242,
+    "hex": "0xF2",
+    "direction": "ltr"
+  },
+  {
+    "name": "uni06F1",
+    "unicode": [
+      "U+06F1"
+    ],
+    "form": "digit",
+    "code": 243,
+    "hex": "0xF3",
+    "direction": "ltr"
+  },
+  {
+    "name": "uni06F2",
+    "unicode": [
+      "U+06F2"
+    ],
+    "form": "digit",
+    "code": 244,
+    "hex": "0xF4",
+    "direction": "ltr"
+  },
+  {
+    "name": "uni06F3",
+    "unicode": [
+      "U+06F3"
+    ],
+    "form": "digit",
+    "code": 245,
+    "hex": "0xF5",
+    "direction": "ltr"
+  },
+  {
+    "name": "uni06F4",
+    "unicode": [
+      "U+06F4"
+    ],
+    "form": "digit",
+    "code": 246,
+    "hex": "0xF6",
+    "direction": "ltr"
+  },
+  {
+    "name": "uni06F5",
+    "unicode": [
+      "U+06F5"
+    ],
+    "form": "digit",
+    "code": 247,
+    "hex": "0xF7",
+    "direction": "ltr"
+  },
+  {
+    "name": "uni06F6",
+    "unicode": [
+      "U+06F6"
+    ],
+    "form": "digit",
+    "code": 248,
+    "hex": "0xF8",
+    "direction": "ltr"
+  },
+  {
+    "name": "uni06F7",
+    "unicode": [
+      "U+06F7"
+    ],
+    "form": "digit",
+    "code": 249,
+    "hex": "0xF9",
+    "direction": "ltr"
+  },
+  {
+    "name": "uni06F8",
+    "unicode": [
+      "U+06F8"
+    ],
+    "form": "digit",
+    "code": 250,
+    "hex": "0xFA",
+    "direction": "ltr"
+  },
+  {
+    "name": "uni06F9",
+    "unicode": [
+      "U+06F9"
+    ],
+    "form": "digit",
+    "code": 251,
+    "hex": "0xFB",
+    "direction": "ltr"
+  }
+]

@@ -730,6 +730,26 @@ function ArabiMalayalamEditor() {
     }
   };
 
+  // Legacy code for software that cannot shape Arabic; it only reads right in an ARML font.
+  const handleCopyArml = async () => {
+    if (!text.trim()) {
+      toast.error("Nothing to copy!");
+      return;
+    }
+    const { toArmlDetailed } = await import("../lib/arml");
+    const result = toArmlDetailed(text);
+    await navigator.clipboard.writeText(result.text);
+    toast.success("Copied as ARML", { description: "Paste it where an ARML font is applied." });
+    if (result.latinLetters > 0) {
+      toast.warning(
+        `${result.latinLetters} Latin letters were kept as typed. Give them a Latin font.`,
+      );
+    }
+    if (result.unmapped.length > 0) {
+      toast.warning(`No ARML glyph for ${result.unmapped.join(" ")}; left out.`);
+    }
+  };
+
   const handleDownload = () => {
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -1053,6 +1073,7 @@ function ArabiMalayalamEditor() {
                 onToggleVoice={toggleVoiceTyping}
                 onCopyText={handleCopy}
                 onCopyStyled={handleCopyStyled}
+                onCopyArml={handleCopyArml}
                 onDownload={handleDownload}
               >
                 <LanguageToggle

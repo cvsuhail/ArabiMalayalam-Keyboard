@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ChevronUp, Copy, Download, Mic, MicOff, Palette } from "lucide-react";
+import { ChevronUp, Copy, Download, Mic, MicOff, Palette, Type } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ interface EditorDockProps {
   onToggleVoice: () => void;
   onCopyText: () => void;
   onCopyStyled: () => void;
+  onCopyArml: () => void;
   onDownload: () => void;
   /** Left-hand slot, e.g. the language toggle. */
   children?: ReactNode;
@@ -30,6 +31,7 @@ export function EditorDock({
   onToggleVoice,
   onCopyText,
   onCopyStyled,
+  onCopyArml,
   onDownload,
   children,
 }: EditorDockProps) {
@@ -76,6 +78,9 @@ export function EditorDock({
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onCopyStyled}>
                 <Palette className="size-4" /> Copy with styles
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onCopyArml}>
+                <Type className="size-4" /> Copy as ARML
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={onDownload}>
                 <Download className="size-4" /> Download as .txt
