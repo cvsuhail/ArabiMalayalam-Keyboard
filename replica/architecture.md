@@ -48,19 +48,23 @@ the licence row in the data layer (no RLS on D1).
   (ARML -> Unicode for the subset that is unambiguous).
 - **Copy rule:** copied ARML text only looks right in an ARML font. Copying is free;
   the font is what is paid for. That is exactly the model asked for.
-- **Fonts:** the cvsuhail-* family needs real font files. Hard limit: I cannot hand-draw
-  professional calligraphy. Plan: derive each style from an open-licence (OFL) Arabic
-  font (candidates: Amiri, Noto Naskh, Scheherazade New, Lateef, Aref Ruqaa, Reem Kufi,
-  Harmattan), subset to the ARML glyph set, remap to ARML code points with fontTools,
-  rename to cvsuhail-vahid, cvsuhail-isnan... and vary weight/slant/width. OFL permits
-  renamed derivatives and sale of the files, but forbids the Reserved Font Name and
-  needs the licence text shipped. The user (or a type designer) can replace any file
-  later with a hand-drawn one without code changes, since the shop reads `fonts` rows.
-- **Try-out vs paid:** the browser must receive a font to preview it, so a preview
-  copy can be extracted. Mitigation, not prevention: preview files are subset to the
-  ARML range, served as woff2 with a "PREVIEW" watermark glyph set, and the full
-  ttf/otf is only served from R2 through a signed URL after a verified payment.
-  Say this plainly to the user; DRM for fonts does not exist.
+- **Fonts (built, M5a):** `scripts/fonts/build.py` derives each cvsuhail-* font from an
+  open-licence (SIL OFL) Arabic font: Amiri, Noto Naskh Arabic, Scheherazade New, Lateef,
+  Aref Ruqaa, Reem Kufi, Harmattan, Noto Sans Arabic. Config: `scripts/fonts/fonts.json`
+  (names are placeholders). Output: `public/fonts/arml/*.woff2`, previewed at `/fonts`.
+  I cannot hand-draw calligraphy; the styles are the sources' styles under new names. Two
+  sources lack some Arabi-Malayalam letters, so those glyphs are borrowed from Noto Naskh.
+- **Licence correction (2026-10-26):** an earlier version of this document said OFL permits
+  selling renamed derivatives. It does not: OFL 1.1 forbids selling the font software "by
+  itself", original or modified. Derivatives may be given away, and sold only as part of a
+  bundle with real added value, which is a grey area. Decision: **the shop is on hold.**
+  The OFL-based fonts are free. Options for charging later: (a) a bundle (fonts plus
+  converter licence, support, updates) after legal advice, (b) sell only fonts drawn
+  originally by you or a designer, (c) charge for something else, such as a supporter pack.
+  Whichever is chosen, OFL texts ship next to every derived font.
+- **Try-out vs download:** the browser needs the font to preview it, so previews can always
+  be saved. Free OFL fonts make that moot. If original paid fonts are added later, serve
+  watermarked subset previews and the full file only after verified payment (M5b).
 
 ## 4. API (Cloudflare server routes, `src/routes/api/*`)
 
@@ -100,9 +104,10 @@ Editor routes need no API (all local).
    print, feedback, About, day grouping.
 4. **ARML engine (M4):** `src/lib/arml/` converter + tests; "Copy as ARML" in S08;
    font menu entries for cvsuhail-* in preview mode.
-5. **Font files + shop (M5):** build script `scripts/build-fonts.py` (fontTools), D1 schema,
-   R2 upload, Razorpay checkout, licence page, download route. Needs the user's
-   Razorpay keys and Cloudflare D1/R2 bindings.
+5. **Font files (M5a, done) and shop (M5b, on hold):** build script `scripts/fonts/build.py`
+   and the `/fonts` preview are done. D1 schema, R2 upload, Razorpay checkout, licence page
+   and download route wait for a licensing decision and the user's Razorpay keys and
+   Cloudflare D1/R2 bindings.
 6. **Fixes** from replica-entrepreneur, if run.
 
 ## Riskiest parts

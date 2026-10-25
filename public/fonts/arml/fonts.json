@@ -1,0 +1,66 @@
+[
+  {
+    "id": "cvsuhail-vahid",
+    "label": "Vahid",
+    "style": "Classic naskh with a calligraphic flow",
+    "base": "Amiri-Regular.ttf",
+    "licence": "licenses/amiri-OFL.txt",
+    "file": "cvsuhail-vahid.woff2"
+  },
+  {
+    "id": "cvsuhail-isnan",
+    "label": "Isnan",
+    "style": "Clean, even naskh for long reading",
+    "base": "NotoNaskhArabic[wght].ttf",
+    "licence": "licenses/notonaskharabic-OFL.txt",
+    "file": "cvsuhail-isnan.woff2"
+  },
+  {
+    "id": "cvsuhail-nabil",
+    "label": "Nabil",
+    "style": "Open, generous naskh with a large x-height",
+    "base": "ScheherazadeNew-Regular.ttf",
+    "licence": "licenses/scheherazadenew-OFL.txt",
+    "file": "cvsuhail-nabil.woff2"
+  },
+  {
+    "id": "cvsuhail-zaid",
+    "label": "Zaid",
+    "style": "Light, slanted nastaliq-leaning hand",
+    "base": "Lateef-Regular.ttf",
+    "licence": "licenses/lateef-OFL.txt",
+    "file": "cvsuhail-zaid.woff2"
+  },
+  {
+    "id": "cvsuhail-rayyan",
+    "label": "Rayyan",
+    "style": "Ruqaa: quick, compact, handwritten",
+    "base": "ArefRuqaa-Regular.ttf",
+    "licence": "licenses/arefruqaa-OFL.txt",
+    "file": "cvsuhail-rayyan.woff2"
+  },
+  {
+    "id": "cvsuhail-faris",
+    "label": "Faris",
+    "style": "Kufi: geometric and strong for headings",
+    "base": "ReemKufi[wght].ttf",
+    "licence": "licenses/reemkufi-OFL.txt",
+    "file": "cvsuhail-faris.woff2"
+  },
+  {
+    "id": "cvsuhail-amal",
+    "label": "Amal",
+    "style": "Soft, rounded sans for screens",
+    "base": "Harmattan-Regular.ttf",
+    "licence": "licenses/harmattan-OFL.txt",
+    "file": "cvsuhail-amal.woff2"
+  },
+  {
+    "id": "cvsuhail-shabab",
+    "label": "Shabab",
+    "style": "Modern sans, neutral and legible",
+    "base": "NotoSansArabic[wdth,wght].ttf",
+    "licence": "licenses/notosansarabic-OFL.txt",
+    "file": "cvsuhail-shabab.woff2"
+  }
+]

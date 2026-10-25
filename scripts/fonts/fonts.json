@@ -1,0 +1,65 @@
+{
+  "_about": "The cvsuhail-* ARML font family. Each entry is derived from an open-licence (SIL OFL) font. Names and labels are placeholders: rename freely, nothing else depends on them. `source` is a file in scripts/fonts/sources; `location` picks the instance of a variable font.",
+  "fallbacks": ["NotoNaskhArabic[wght].ttf", "Amiri-Regular.ttf"],
+  "fonts": [
+    {
+      "id": "cvsuhail-vahid",
+      "label": "Vahid",
+      "style": "Classic naskh with a calligraphic flow",
+      "source": "Amiri-Regular.ttf",
+      "licence": "amiri"
+    },
+    {
+      "id": "cvsuhail-isnan",
+      "label": "Isnan",
+      "style": "Clean, even naskh for long reading",
+      "source": "NotoNaskhArabic[wght].ttf",
+      "location": { "wght": 400 },
+      "licence": "notonaskharabic"
+    },
+    {
+      "id": "cvsuhail-nabil",
+      "label": "Nabil",
+      "style": "Open, generous naskh with a large x-height",
+      "source": "ScheherazadeNew-Regular.ttf",
+      "licence": "scheherazadenew"
+    },
+    {
+      "id": "cvsuhail-zaid",
+      "label": "Zaid",
+      "style": "Light, slanted nastaliq-leaning hand",
+      "source": "Lateef-Regular.ttf",
+      "licence": "lateef"
+    },
+    {
+      "id": "cvsuhail-rayyan",
+      "label": "Rayyan",
+      "style": "Ruqaa: quick, compact, handwritten",
+      "source": "ArefRuqaa-Regular.ttf",
+      "licence": "arefruqaa"
+    },
+    {
+      "id": "cvsuhail-faris",
+      "label": "Faris",
+      "style": "Kufi: geometric and strong for headings",
+      "source": "ReemKufi[wght].ttf",
+      "location": { "wght": 500 },
+      "licence": "reemkufi"
+    },
+    {
+      "id": "cvsuhail-amal",
+      "label": "Amal",
+      "style": "Soft, rounded sans for screens",
+      "source": "Harmattan-Regular.ttf",
+      "licence": "harmattan"
+    },
+    {
+      "id": "cvsuhail-shabab",
+      "label": "Shabab",
+      "style": "Modern sans, neutral and legible",
+      "source": "NotoSansArabic[wdth,wght].ttf",
+      "location": { "wdth": 100, "wght": 400 },
+      "licence": "notosansarabic"
+    }
+  ]
+}

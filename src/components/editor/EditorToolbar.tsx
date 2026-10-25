@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Editor } from "@tiptap/react";
+import { Link } from "@tanstack/react-router";
 import {
   AlignCenter,
   AlignJustify,
@@ -142,6 +143,12 @@ export function EditorToolbar({
               </button>
             ))}
           </div>
+          <Link
+            to="/fonts"
+            className="mt-1 block rounded-md border-t border-border px-3 py-2 text-sm font-semibold text-primary hover:bg-muted"
+          >
+            Try ARML fonts…
+          </Link>
         </PopoverContent>
       </Popover>
 

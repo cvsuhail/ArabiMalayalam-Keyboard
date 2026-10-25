@@ -33,3 +33,8 @@ dist-ssr
 
 # Reference screenshots of other apps (never shipped)
 replica/screens/
+
+# Font build: virtualenv, downloaded sources and unshipped output
+scripts/fonts/.venv/
+scripts/fonts/sources/
+scripts/fonts/out/
