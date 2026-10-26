@@ -27,6 +27,8 @@ interface Recognition {
   onresult: ((event: RecognitionEvent) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
+  onaudiostart: (() => void) | null;
+  onspeechstart: (() => void) | null;
   start: () => void;
   stop: () => void;
   abort: () => void;
@@ -62,6 +64,9 @@ function describeError(code: string, language: VoiceLanguage): string | null {
 /** Restarts closer together than this, this many times in a row, mean something is wrong. */
 const FAST_RESTART_MS = 700;
 const MAX_FAST_RESTARTS = 4;
+/** Browsers announce when the microphone opens; if that never happens, no audio is arriving. */
+const AUDIO_START_TIMEOUT_MS = 6000;
+const MAX_SILENT_SESSIONS = 3;
 
 interface Options {
   language: VoiceLanguage;
@@ -88,6 +93,7 @@ export function useVoiceTyping(options: Options) {
   const wantedRef = useRef(false);
   const restartTimesRef = useRef<number[]>([]);
   const queueRef = useRef<Promise<void>>(Promise.resolve());
+  const silentSessionsRef = useRef(0);
 
   useEffect(() => {
     setSupported(recognitionConstructor() !== undefined);
@@ -111,7 +117,25 @@ export function useVoiceTyping(options: Options) {
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
+    let audioStarted = false;
+    const watchdog = window.setTimeout(() => {
+      if (audioStarted || !wantedRef.current || recognitionRef.current !== recognition) return;
+      optionsRef.current.onProblem(
+        "The browser is not getting any audio from your microphone. Check which input device is selected and that this site is allowed to use it.",
+      );
+      recognition.abort();
+      finish();
+    }, AUDIO_START_TIMEOUT_MS);
+    recognition.onaudiostart = () => {
+      audioStarted = true;
+      window.clearTimeout(watchdog);
+    };
+    recognition.onspeechstart = () => {
+      silentSessionsRef.current = 0;
+    };
+
     recognition.onresult = (event) => {
+      silentSessionsRef.current = 0;
       let finalText = "";
       let interimText = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -129,14 +153,26 @@ export function useVoiceTyping(options: Options) {
     };
 
     recognition.onerror = (event) => {
-      const message = describeError(event.error, language);
-      if (message) {
-        optionsRef.current.onProblem(message);
-        finish();
+      window.clearTimeout(watchdog);
+      if (event.error === "no-speech") {
+        silentSessionsRef.current++;
+        if (silentSessionsRef.current >= MAX_SILENT_SESSIONS) {
+          optionsRef.current.onProblem(
+            "Still not hearing anything. Check your microphone's volume and input device.",
+          );
+          finish();
+        }
+        return;
       }
+      if (event.error === "aborted") return;
+      optionsRef.current.onProblem(
+        describeError(event.error, language) ?? `Voice typing stopped (${event.error}).`,
+      );
+      finish();
     };
 
     recognition.onend = () => {
+      window.clearTimeout(watchdog);
       setInterim("");
       if (!wantedRef.current || recognitionRef.current !== recognition) return;
       // The browser ended the session (silence, or one phrase on Android): listen again.
@@ -180,6 +216,7 @@ export function useVoiceTyping(options: Options) {
     }
     wantedRef.current = true;
     restartTimesRef.current = [];
+    silentSessionsRef.current = 0;
     setListening(true);
     begin();
   }, [begin]);
